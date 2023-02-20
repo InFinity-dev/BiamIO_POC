@@ -40,6 +40,10 @@ class SnakeGameClass:
         self.allowedLength = 150  # total allowed Length
         self.previousHead = 0, 0  # previous head point
 
+        self.speed=0.1
+        self.velocityX=random.choice([-1,0,1])
+        self.velocityY=random.choice([-1,0,1])
+        
         self.imgFood = cv2.imread(pathFood, cv2.IMREAD_UNCHANGED)
         self.hFood, self.wFood, _ = self.imgFood.shape
         self.foodPoint = 0, 0
@@ -51,7 +55,7 @@ class SnakeGameClass:
     def randomFoodLocation(self):
         self.foodPoint = random.randint(100, 1000), random.randint(100, 600)
 
-    def update(self, imgMain, currentHead):
+    def update(self, imgMain,  HandPoints=[]):
 
         if self.gameOver:
             # pass
@@ -61,7 +65,35 @@ class SnakeGameClass:
                                scale=7, thickness=5, offset=20)
         else:
             px, py = self.previousHead
-            cx, cy = currentHead
+            
+            #----HandsPoint moving ----
+            if HandPoints:
+                m_x,m_y=HandPoints
+                dx=m_x-px #-1~1
+                dy=m_y-py
+                
+                if math.hypot(dx, dy) > math.hypot(1280, 720)/10:
+                    self.speed=math.hypot(1280, 720)/10 #14.5
+                else:
+                    self.speed=math.hypot(dx, dy)/10
+                
+                if dx!=0:
+                    self.velocityX=dx/1280
+                if dy!=0:
+                    self.velocityY=dy/720
+                
+                print(self.velocityX)
+                print(self.velocityY)
+                
+                cx=round(px+self.velocityX*self.speed)
+                cy=round(py+self.velocityY*self.speed)
+                
+            else:
+                print("확인")
+                self.speed=5
+                cx=int(px+self.velocityX*self.speed)
+                cy=int(py+self.velocityY*self.speed)
+            #----HandsPoint moving ----end
 
             print(f'{cx} , {cy}')
 
