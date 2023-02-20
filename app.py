@@ -38,7 +38,7 @@ class SnakeGameClass:
         self.lengths = []  # distance between each point
         self.currentLength = 0  # total length of the snake
         self.allowedLength = 150  # total allowed Length
-        self.previousHead = 0, 0  # previous head point
+        self.previousHead = 600, 350  # previous head point => random 값으로 주기
 
         self.speed=0.1
         self.velocityX=random.choice([-1,0,1])
@@ -67,15 +67,19 @@ class SnakeGameClass:
             px, py = self.previousHead
             
             #----HandsPoint moving ----
+            s_speed=30
             if HandPoints:
                 m_x,m_y=HandPoints
                 dx=m_x-px #-1~1
                 dy=m_y-py
                 
-                if math.hypot(dx, dy) > math.hypot(1280, 720)/10:
-                    self.speed=math.hypot(1280, 720)/10 #14.5
+                #speed 범위: 0~1460
+                if math.hypot(dx, dy) > math.hypot(1280, 720)/10: 
+                    self.speed=math.hypot(1280, 720)/10 #146
+                elif math.hypot(dx, dy) < s_speed:
+                    self.speed=s_speed
                 else:
-                    self.speed=math.hypot(dx, dy)/10
+                    self.speed=math.hypot(dx, dy)
                 
                 if dx!=0:
                     self.velocityX=dx/1280
@@ -90,9 +94,9 @@ class SnakeGameClass:
                 
             else:
                 print("확인")
-                self.speed=5
-                cx=int(px+self.velocityX*self.speed)
-                cy=int(py+self.velocityY*self.speed)
+                self.speed=s_speed
+                cx=round(px+self.velocityX*self.speed)
+                cy=round(py+self.velocityY*self.speed)
             #----HandsPoint moving ----end
 
             print(f'{cx} , {cy}')
@@ -198,10 +202,11 @@ def snake():
             img = cv2.flip(img, 1)
             hands, img = detector.findHands(img, flipType=False)
 
+            pointIndex=[]
             if hands:
                 lmList = hands[0]['lmList']
                 pointIndex = lmList[8][0:2]
-                img = game.update(img, pointIndex)
+            img = game.update(img, pointIndex)
 
             # encode the image as a JPEG string
             _, img_encoded = cv2.imencode('.jpg', img)
