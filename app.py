@@ -75,7 +75,7 @@ class SnakeGameClass:
                 if math.hypot(dx, dy) > math.hypot(1280, 720)/10:
                     self.speed=math.hypot(1280, 720)/10 #14.5
                 else:
-                    self.speed=math.hypot(dx, dy)/10
+                    self.speed=math.hypot(dx, dy)
                 
                 if dx!=0:
                     self.velocityX=dx/1280
@@ -90,7 +90,7 @@ class SnakeGameClass:
                 
             else:
                 print("확인")
-                self.speed=5
+                self.speed=30
                 cx=int(px+self.velocityX*self.speed)
                 cy=int(py+self.velocityY*self.speed)
             #----HandsPoint moving ----end
@@ -198,10 +198,13 @@ def snake():
             img = cv2.flip(img, 1)
             hands, img = detector.findHands(img, flipType=False)
 
+            pointIndex = []
+
             if hands:
                 lmList = hands[0]['lmList']
                 pointIndex = lmList[8][0:2]
-                img = game.update(img, pointIndex)
+
+            img = game.update(img, pointIndex)
 
             # encode the image as a JPEG string
             _, img_encoded = cv2.imencode('.jpg', img)
