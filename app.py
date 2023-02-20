@@ -87,14 +87,14 @@ class SnakeGameClass:
                 if dy!=0:
                     self.velocityY=dy/720
                 
-                print(self.velocityX)
-                print(self.velocityY)
+                # print(self.velocityX)
+                # print(self.velocityY)
                 
                 cx=round(px+self.velocityX*self.speed)
                 cy=round(py+self.velocityY*self.speed)
                 
             else:
-                print("확인")
+                # print("확인")
 
                 self.speed=s_speed
                 cx=round(px+self.velocityX*self.speed)
@@ -102,10 +102,10 @@ class SnakeGameClass:
 
             #----HandsPoint moving ----end
 
-            print(f'{cx} , {cy}')
+            # print(f'{cx} , {cy}')
 
             self.points.append([cx, cy])
-            print(f'{self.points}')
+            # print(f'{self.points}')
 
             socketio.emit('game_data', {'head_x': cx, 'head_y': cy})
             socketio.emit('game_data', {'body_node': self.points})
@@ -127,14 +127,14 @@ class SnakeGameClass:
 
             # Check if snake ate the Food
             rx, ry = self.foodPoint
-            print(f'먹이 위치 : {self.foodPoint}')
+            # print(f'먹이 위치 : {self.foodPoint}')
             if rx - self.wFood // 2 < cx < rx + self.wFood // 2 and \
                     ry - self.hFood // 2 < cy < ry + self.hFood // 2:
                 self.randomFoodLocation()
                 self.allowedLength += 50
                 self.score += 1
 
-                print(self.score)
+                # print(self.score)
                 socketio.emit('game_data', {'score': self.score})
 
             # Draw Snake
@@ -165,7 +165,8 @@ class SnakeGameClass:
             # cv2.imshow('opimg',opimg)
 
             if -1 <= minDist <= 1:
-                print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Hit")
+                pass
+                # print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Hit")
                 # self.gameOver = True
                 # self.points = []  # all points of the snake
                 # self.lengths = []  # distance between each point
