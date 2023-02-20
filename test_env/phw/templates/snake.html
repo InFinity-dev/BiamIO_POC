@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SNAKE</title>
+    <script src="//code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
+</head>
+<body>
+<h1>snake.html</h1>
+<div><h1 style="display: inline;">SCORE : </h1><h1 style="display: inline;" id="score">0</h1></div>
+
+<img src="{{ url_for('snake') }}" />
+<div><a>head_x 좌표 : </a><a id="head_x"></a></div>
+<div><a>head_y 좌표 : </a><a id="head_y"></a></div>
+<div><a>몸통 리스트 : </a><a id="body_node"></a></div>
+<script>
+    var socket = io.connect('http://' + document.domain + ':' + location.port);
+    socket.on('game_data', function(data) {
+        $('#head_x').text(data['head_x']);
+        $('#head_y').text(data['head_y']);
+        $('#body_node').text(data['body_node']);
+        $('#score').text(data['score']);
+
+    });
+</script>
+</body>
+</html>
