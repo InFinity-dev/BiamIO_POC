@@ -1,4 +1,5 @@
 import json
+import datetime
 import time
 import math
 import random
@@ -195,6 +196,20 @@ def data():
     while True:
         time.sleep(1)
         socketio.emit('data', {'data': 'This is a data stream!'})
+
+
+# 소켓 테스트용 1초마다 시간 쏴주는 함수
+@app.route("/servertime")
+def servertime():
+    return render_template("servertime.html")
+
+
+@socketio.on('get_time')
+def get_time():
+    while True:
+        current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        socketio.emit('time', {'time': current_time})
+        socketio.sleep(1)
 
 @app.route('/snake')
 def snake():
