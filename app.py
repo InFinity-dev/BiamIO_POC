@@ -94,9 +94,11 @@ class SnakeGameClass:
                 
             else:
                 print("확인")
+
                 self.speed=s_speed
                 cx=round(px+self.velocityX*self.speed)
                 cy=round(py+self.velocityY*self.speed)
+
             #----HandsPoint moving ----end
 
             print(f'{cx} , {cy}')
@@ -202,10 +204,12 @@ def snake():
             img = cv2.flip(img, 1)
             hands, img = detector.findHands(img, flipType=False)
 
-            pointIndex=[]
+            pointIndex = []
+            
             if hands:
                 lmList = hands[0]['lmList']
                 pointIndex = lmList[8][0:2]
+
             img = game.update(img, pointIndex)
 
             # encode the image as a JPEG string
