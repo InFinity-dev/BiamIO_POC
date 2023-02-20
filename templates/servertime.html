@@ -10,9 +10,9 @@
 <div id="time"></div>
 <script>
   var socket = io.connect('http://' + document.domain + ':' + location.port);
-  // socket.on('connect', function() {
-  //   socket.emit('get_time');
-  // });
+  socket.on('connect', function() {
+    socket.emit('get_time');
+  });
   socket.on('time', function(data) {
     $('#time').html(data['time']);
   });
