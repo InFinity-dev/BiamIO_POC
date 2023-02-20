@@ -155,8 +155,6 @@ pylibsrtp==0.8.0
 pylint==2.6.0
 Pympler==1.0.1
 PyMySQL==1.0.2
-pyobjc-core==9.0.1
-pyobjc-framework-Cocoa==9.0.1
 pyOpenSSL==23.0.0
 pyparsing==3.0.9
 pyrsistent==0.18.0
