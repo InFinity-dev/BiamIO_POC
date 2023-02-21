@@ -3,7 +3,7 @@ from flask_socketio import SocketIO, emit, join_room, leave_room, close_room, ro
 import random
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret!'
+app.config['SECRET_KEY'] = "roomfitisdead"
 socketio = SocketIO(app, cors_allowed_origins='*')
 
 # Store connected clients
