@@ -1,21 +1,7 @@
-import json
 import datetime
 import time
-import math
-import random
-import cvzone
-import cv2
-import numpy as np
-from cvzone.HandTrackingModule import HandDetector
 from flask import Flask, render_template, Response, request, redirect, url_for, session
 from flask_socketio import SocketIO, emit, join_room
-import os
-import ssl
-from distutils.util import strtobool
-import aiohttp
-from aiohttp import web
-import jinja2
-import aiohttp_jinja2
 import uuid
 from engineio.payload import Payload
 Payload.max_decode_packets = 200
