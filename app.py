@@ -41,7 +41,7 @@ def ccw(p, a, b):
     return vect_sub_ap[0] * vect_sub_bp[1] - vect_sub_ap[1] * vect_sub_bp[0];
 
 
-def sementIntersects(p1_a, p1_b, p2_a, p2_b):
+def segmentIntersects(p1_a, p1_b, p2_a, p2_b):
     ab = ccw(p1_a, p1_b, p2_a) * ccw(p1_a, p1_b, p2_b);
     cd = ccw(p2_a, p2_b, p1_a) * ccw(p2_a, p2_b, p1_b);
 
@@ -62,7 +62,7 @@ def isCollision(u1_head_pt, u2_pts):
 
     for u2_pt in u2_pts:
         p2_a, p2_b = u2_pt[0], u2_pt[1]
-        if sementIntersects(p1_a, p1_b, p2_a, p2_b):
+        if segmentIntersects(p1_a, p1_b, p2_a, p2_b):
             print(u2_pt)
             return True
     return False
