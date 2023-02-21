@@ -9,6 +9,8 @@ import numpy as np
 from cvzone.HandTrackingModule import HandDetector
 from flask import Flask, render_template, Response, request, redirect, url_for, session
 from flask_socketio import SocketIO, emit, join_room
+from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription
+from aiortc.contrib.signaling import object_from_string, object_to_string
 import os
 import ssl
 from distutils.util import strtobool
@@ -32,6 +34,55 @@ cap.set(3, 1280)
 cap.set(4, 720)
 
 detector = HandDetector(detectionCon=0.5, maxHands=1)
+
+class WebRTC:
+    def __init__(self, socketio, room_id):
+        self.socketio = socketio
+        self.room_id = room_id
+        self.pc = RTCPeerConnection()
+        self.pc.on("iceconnectionstatechange", self.on_ice_connection_state_change)
+        self.pc.on("track", self.on_track)
+
+    async def create_offer(self):
+        self.pc.addTransceiver("audio")
+        self.pc.addTransceiver("video")
+        self.local_video = MediaStreamTrack()
+        self.pc.addTrack(self.local_video)
+
+        offer = await self.pc.createOffer()
+        await self.pc.setLocalDescription(offer)
+
+        self.socketio.emit("webrtc_offer", {
+            "room_id": self.room_id,
+            "sdp": object_to_string(self.pc.localDescription),
+        })
+
+    async def set_remote_description(self, sdp):
+        await self.pc.setRemoteDescription(RTCSessionDescription(sdp))
+        answer = await self.pc.createAnswer()
+        await self.pc.setLocalDescription(answer)
+
+        self.socketio.emit("webrtc_answer", {
+            "room_id": self.room_id,
+            "sdp": object_to_string(self.pc.localDescription),
+        })
+
+    def add_ice_candidate(self, candidate):
+        self.pc.addIceCandidate(candidate)
+
+    def on_ice_connection_state_change(self):
+        if self.pc.iceConnectionState == "failed":
+            self.socketio.emit("webrtc_error", {
+                "room_id": self.room_id,
+                "message": "WebRTC connection failed",
+            })
+
+    def on_track(self, track):
+        self.socketio.emit("webrtc_track", {
+            "room_id": self.room_id,
+            "track_id": track.id,
+        })
+
 
 class SnakeGameClass:
     def __init__(self, pathFood):

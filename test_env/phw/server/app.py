@@ -59,8 +59,8 @@ def handle_join():
         
         last_created_room = ""
         print(room_of_players)
-        emit('matched', {'room_id' : room_id, 'sid' : sid}, to=room_id, broadcast=True)
-        emit('start-game', to=room_id)
+        emit('matched', {'room_id' : room_id, 'sid' : sid}, to=room_id)
+        emit('start-game', {'room_id' : room_id, 'sid' : sid}, to=room_id)
         
 
 # 소켓 테스트용 1초마다 시간 쏴주는 함수
