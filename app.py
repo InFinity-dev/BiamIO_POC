@@ -18,7 +18,6 @@ import jinja2
 import aiohttp_jinja2
 
 from engineio.payload import Payload
-from sympy import Symbol, solve
 
 Payload.max_decode_packets = 200
 
@@ -63,7 +62,17 @@ def isCollision(u1_head_pt, u2_pts):
             if sementIntersects(p1_a,p1_b,p2_a,p2_b):
                 print(u2_pt)
                 return True
+
         return False
+    p1_a, p1_b = u1_head_pt[0], u1_head_pt[1]
+
+    for u2_pt in u2_pts:
+        p2_a, p2_b = u2_pt[0], u2_pt[1]
+        if segmentIntersects(p1_a, p1_b, p2_a, p2_b):
+            print(u2_pt)
+            return True
+    return False
+
 
 class SnakeGameClass:
     def __init__(self, pathFood):
@@ -73,13 +82,13 @@ class SnakeGameClass:
         self.allowedLength = 150  # total allowed Length
         self.previousHead = 600, 350  # previous head point => random 값으로 주기
 
-        self.speed=0.1
-        self.velocityX=random.choice([-1,0,1])
-        if self.velocityX==0:
-            self.velocityY=random.choice([-1,1])
+        self.speed = 0.1
+        self.velocityX = random.choice([-1, 0, 1])
+        if self.velocityX == 0:
+            self.velocityY = random.choice([-1, 1])
         else:
-            self.velocityY=random.choice([-1,0,1])
-        
+            self.velocityY = random.choice([-1, 0, 1])
+
         self.imgFood = cv2.imread(pathFood, cv2.IMREAD_UNCHANGED)
         self.hFood, self.wFood, _ = self.imgFood.shape
         self.foodPoint = 0, 0
@@ -90,8 +99,8 @@ class SnakeGameClass:
 
     def randomFoodLocation(self):
         self.foodPoint = random.randint(100, 1000), random.randint(100, 600)
-    
-    def update(self, imgMain,  HandPoints=[]):
+
+    def update(self, imgMain, HandPoints=[]):
 
         if self.gameOver:
             # pass
@@ -101,9 +110,9 @@ class SnakeGameClass:
                                scale=7, thickness=5, offset=20)
         else:
             px, py = self.previousHead
-            
-            #----HandsPoint moving ----
-            s_speed=30
+
+            # ----HandsPoint moving ----
+            s_speed = 30
             if HandPoints:
                 m_x,m_y=HandPoints
                 dx=m_x-px #-1~1
@@ -124,10 +133,10 @@ class SnakeGameClass:
                 
                 # print(self.velocityX)
                 # print(self.velocityY)
-                
-                cx=round(px+self.velocityX*self.speed)
-                cy=round(py+self.velocityY*self.speed)
-                
+
+                cx = round(px + self.velocityX * self.speed)
+                cy = round(py + self.velocityY * self.speed)
+
             else:
                 # print("확인")
 
@@ -135,10 +144,8 @@ class SnakeGameClass:
                 cx=round(px+self.velocityX*self.speed)
                 cy=round(py+self.velocityY*self.speed)
 
-            #----HandsPoint moving ----end
+            self.points.append([[px, py], [cx, cy]])
 
-            self.points.append([[px,py],[cx,cy]])
-            
             # print(f'{cx} , {cy}')
             # print(f'{self.points}')
 
@@ -191,8 +198,8 @@ class SnakeGameClass:
 
             # Check for Collision                
             pts = np.array(self.points[:-3], np.int32)
-            if len(pts.shape)==3:
-                pts=pts[:,1]
+            if len(pts.shape) == 3:
+                pts = pts[:, 1]
             pts = pts.reshape((-1, 1, 2))
             cv2.polylines(imgMain, np.int32([pts]), False, (0, 255, 0), 3)
 
@@ -200,30 +207,36 @@ class SnakeGameClass:
             # ---- Collision ----      
             if isCollision(self.points[-1], self.points[:-5]):
                 print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Hit")
-                self.gameOver = True
-                self.points = []  # all points of the snake
-                self.lengths = []  # distance between each point
-                self.currentLength = 0  # total length of the snake
-                self.allowedLength = 150  # total allowed Length
-                self.previousHead = 0, 0  # previous head point
-                self.randomFoodLocation()
+                # self.gameOver = True
+                # self.points = []  # all points of the snake
+                # self.lengths = []  # distance between each point
+                # self.currentLength = 0  # total length of the snake
+                # self.allowedLength = 150  # total allowed Length
+                # self.previousHead = 0, 0  # previous head point
+                # self.randomFoodLocation()
 
         return imgMain
 
+
 game = SnakeGameClass("./static/food.png")
+
+
 ######################################################################################
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     return render_template("snake.html")
 
+
 @socketio.on('connect')
 def test_connect():
     print('Client connected')
 
+
 @socketio.on('disconnect')
 def test_disconnect():
     print('Client disconnected')
+
 
 @app.route('/data')
 def data():
@@ -245,6 +258,7 @@ def get_time():
         socketio.emit('time', {'time': current_time})
         socketio.sleep(1)
 
+
 @app.route('/snake')
 def snake():
     def generate():
@@ -254,7 +268,7 @@ def snake():
             hands, img = detector.findHands(img, flipType=False)
 
             pointIndex = []
-            
+
             if hands:
                 lmList = hands[0]['lmList']
                 pointIndex = lmList[8][0:2]

@@ -23,7 +23,7 @@ Payload.max_decode_packets = 200
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "roomfitisdead"
 
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins='*')
 
 ############################## SNAKE GAME LOGIC SECTION ##############################
 
@@ -177,6 +177,7 @@ class SnakeGameClass:
 
         return imgMain
 
+game = SnakeGameClass("./static/food.png")
 ######################################################################################
 
 waiting_players = []
@@ -187,6 +188,10 @@ last_created_room = ""
 @app.route("/", methods=["GET", "POST"])
 def index():
     return render_template("index.html")
+
+@app.route("/test", methods=["GET", "POST"])
+def test():
+    return render_template("test.html")
 
 @app.route("/enter_snake", methods=["GET", "POST"])
 def enter_snake():
@@ -249,8 +254,6 @@ def get_time():
 
 @app.route('/snake')
 def snake():
-    game = SnakeGameClass("./static/food.png")
-    
     def generate():
         while True:
             success, img = cap.read()
@@ -270,7 +273,7 @@ def snake():
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + img_encoded.tobytes() + b'\r\n')
     
-
+    
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
