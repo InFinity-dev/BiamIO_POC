@@ -34,33 +34,35 @@ cap.set(4, 720)
 
 detector = HandDetector(detectionCon=0.5, maxHands=1)
 
+def ccw( p,  a,  b):
+    vect_sub_ap = [a[0]-p[0], a[1]-p[1]]
+    vect_sub_bp = [b[0]-p[0], b[1]-p[1]]
+    return vect_sub_ap[0]*vect_sub_bp[1]-vect_sub_ap[1]*vect_sub_bp[0];
 
-def ccw(p, a, b):
-    vect_sub_ap = [a[0] - p[0], a[1] - p[1]]
-    vect_sub_bp = [b[0] - p[0], b[1] - p[1]]
-    return vect_sub_ap[0] * vect_sub_bp[1] - vect_sub_ap[1] * vect_sub_bp[0];
+def sementIntersects( p1_a, p1_b, p2_a, p2_b):
+    ab = ccw(p1_a, p1_b, p2_a)*ccw(p1_a, p1_b, p2_b);
+    cd = ccw(p2_a, p2_b ,p1_a)*ccw(p2_a, p2_b, p1_b);
+    
+    if(ab ==0 and cd == 0):
+        if(p1_b[0] < p1_a[0] and p1_b[1] <p1_a[1]): 
+            p1_a,p1_b=p1_b,p1_a
+        if(p2_b[0] < p2_a[0] and p2_b[1] <p2_a[1]):
+            p2_a,p2_b=p2_b,p2_a
+        return not ((p1_b[0]<p2_a[0] and p1_b[1]<p2_a[1])or(p2_b[0]<p1_a[0] and p2_b[1]<p1_a[1]))   
 
-
-def segmentIntersects(p1_a, p1_b, p2_a, p2_b):
-    ab = ccw(p1_a, p1_b, p2_a) * ccw(p1_a, p1_b, p2_b);
-    cd = ccw(p2_a, p2_b, p1_a) * ccw(p2_a, p2_b, p1_b);
-
-    if (ab == 0 and cd == 0):
-        print("확인")
-        if (p1_b[0] < p1_a[0] and p1_b[1] < p1_a[1]):
-            p1_a, p1_b = p1_b, p1_a
-            print(p1_a, p1_b)
-        if (p2_b[0] < p2_a[0] and p2_b[1] < p2_a[1]):
-            p2_a, p2_b = p2_b, p2_a
-            print(p2_a, p2_b)
-        return not ((p1_b[0] < p2_a[0] and p1_b[1] < p2_a[1]) or (p2_b[0] < p1_a[0] and p2_b[1] < p1_a[1]))
-    print(ab)
-    print(cd)
-    return ab <= 0 and cd <= 0;
-
+    return ab <=0 and cd <=0;
 
 def isCollision(u1_head_pt, u2_pts):
-    if not u2_pts:
+        if not u2_pts:
+            return False
+        p1_a,p1_b = u1_head_pt[0],u1_head_pt[1]
+
+        for u2_pt in u2_pts:
+            p2_a,p2_b = u2_pt[0],u2_pt[1]
+            if sementIntersects(p1_a,p1_b,p2_a,p2_b):
+                print(u2_pt)
+                return True
+
         return False
     p1_a, p1_b = u1_head_pt[0], u1_head_pt[1]
 
@@ -112,24 +114,23 @@ class SnakeGameClass:
             # ----HandsPoint moving ----
             s_speed = 30
             if HandPoints:
-                m_x, m_y = HandPoints
-                dx = m_x - px
-                dy = m_y - py
-
-                if dx != 0:
-                    self.velocityX = dx / 1280  # -1~1
-                if dy != 0:
-                    self.velocityY = dy / 720  # -1~1
-
-                # speed 범위: 0~1460
-                if math.hypot(dx, dy) > math.hypot(1280, 720) / 3:
-                    self.speed = math.hypot(1280, 720) / 3  # 486
-                    print("최대 speed 진입", self.speed)
-                elif math.hypot(dx, dy) < math.hypot(1280, 720) / 20:  # 70
-                    self.speed = s_speed
+                m_x,m_y=HandPoints
+                dx=m_x-px #-1~1
+                dy=m_y-py
+                
+                #speed 범위: 0~1460
+                if math.hypot(dx, dy) > math.hypot(1280, 720)/10: 
+                    self.speed=math.hypot(1280, 720)/10 #146
+                elif math.hypot(dx, dy) < s_speed:
+                    self.speed=s_speed
                 else:
-                    self.speed = math.hypot(dx, dy)
-
+                    self.speed=math.hypot(dx, dy)
+                
+                if dx!=0:
+                    self.velocityX=dx/1280
+                if dy!=0:
+                    self.velocityY=dy/720
+                
                 # print(self.velocityX)
                 # print(self.velocityY)
 
@@ -137,13 +138,11 @@ class SnakeGameClass:
                 cy = round(py + self.velocityY * self.speed)
 
             else:
-                self.speed = s_speed
-                print("손없을 떄 ", self.speed)
-                print(self.velocityX * self.speed)
-                cx = round(px + self.velocityX * self.speed)
-                cy = round(py + self.velocityY * self.speed)
+                # print("확인")
 
-            # ----HandsPoint moving ----end
+                self.speed=s_speed
+                cx=round(px+self.velocityX*self.speed)
+                cy=round(py+self.velocityY*self.speed)
 
             self.points.append([[px, py], [cx, cy]])
 
@@ -163,10 +162,12 @@ class SnakeGameClass:
             if self.currentLength > self.allowedLength:
                 for i, length in enumerate(self.lengths):
                     self.currentLength -= length
-                    self.lengths.pop(i)
-                    self.points.pop(i)
-                    if self.currentLength < self.allowedLength:
+                    self.lengths=self.lengths[1:]
+                    self.points=self.points[1:]
+                    
+                    if self.currentLength <= self.allowedLength:
                         break
+            
 
             # Check if snake ate the Food
             rx, ry = self.foodPoint
@@ -181,9 +182,11 @@ class SnakeGameClass:
                 socketio.emit('game_data', {'score': self.score})
 
             # Draw Snake
+            # print(self.points)
+            # print()
             if self.points:
                 for i, point in enumerate(self.points):
-                    cv2.line(imgMain, self.points[i][0], self.points[i][1], (0, 0, 255), 20)
+                    cv2.line(imgMain, self.points[i][1], self.points[i][0], (0, 0, 255), 20)
                 cv2.circle(imgMain, self.points[-1][1], 20, (0, 255, 0), cv2.FILLED)
 
             # Draw Food
@@ -198,9 +201,6 @@ class SnakeGameClass:
             if len(pts.shape) == 3:
                 pts = pts[:, 1]
             pts = pts.reshape((-1, 1, 2))
-            print(pts.shape)
-            print(pts)
-            print()
             cv2.polylines(imgMain, np.int32([pts]), False, (0, 255, 0), 3)
 
             # minDist = cv2.pointPolygonTest(pts, (cx, cy), True)
