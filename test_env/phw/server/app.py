@@ -66,7 +66,7 @@ def handle_join():
 # 소켓 테스트용 1초마다 시간 쏴주는 함수
 @app.route("/servertime")
 def servertime():
-    return render_template("servertime.html")
+    return render_template("index.html")
 
 
 @socketio.on('get_time')
