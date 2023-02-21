@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Chat</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js" integrity="sha512-9r+c1rU0WhWLRp8LSvIBh3hX3b5Lkr2QWzEPmaJvAcsgC5R5gDJM5d5H5PpLcX9BikzLl8WU6d/pDX6xnMeUw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+<div id="status">Connecting...</div>
+<div id="chat" style="display: none;">
+  <ul id="messages"></ul>
+  <form id="form">
+    <input id="input" autocomplete="off">
+    <button>Send</button>
+  </form>
+</div>
+<script>
+  var socket = io('http://krafton604.iptime.org');
+
+  socket.on('connect', function() {
+    document.querySelector('#status').textContent = 'Connected';
+  });
+
+  socket.on('matched', function(data) {
+    document.querySelector('#status').textContent = 'Matched!';
+    document.querySelector('#chat').style.display = 'block';
+    document.querySelector('#form').addEventListener('submit', function(event) {
+      event.preventDefault();
+      var input = document.querySelector('#input');
+      var message = input.value;
+      input.value = '';
+      socket.emit('message', {message: message});
+      var li = document.createElement('li');
+      li.textContent = message;
+      document.querySelector('#messages').appendChild(li);
+    });
+  });
+
+  socket.on('message', function(data) {
+    var li = document.createElement('li');
+    li.textContent = data.message;
+    document.querySelector('#messages').appendChild(li);
+  });
+</script>
+</body>
+</html>

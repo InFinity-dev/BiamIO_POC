@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Real-time Dots</title>
+</head>
+
+<body>
+  <h1>Join to Start Game</h1>
+  <hr>
+  <button id="joinButton">Join</button>
+  <h2 id="isMatched"></h2>
+  <h2 id="alarm"></h2>
+  <script src="//code.jquery.com/jquery-1.11.1.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.0/socket.io.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      // Connect to the server
+      var socket = io.connect('http://krafton604.iptime.org:7777');
+
+      // Handle dot1-position event
+      socket.on('dot1-position', function (data) {
+        drawDot(data.x, data.y, 'red');
+      });
+
+      // Handle dot2-position event
+      socket.on('dot2-position', function (data) {
+        drawDot(data.x, data.y, 'blue');
+      });
+
+      socket.on('video', function () {
+        getMyVideo();
+      } )
+
+      // Handle reset button click event
+      $('#resetButton').click(function (event) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        socket.emit('reset');
+      });
+
+      // Handle reset button click event
+      $('#joinButton').click(function (event) {
+        socket.emit('join');
+      });
+
+      socket.on('waiting', function(data) {
+        console.log("waiting...")
+        $("#isMatched").text("waiting...");
+        $("#alarm").text("user : " + data['sid'] + " entered room : " + data['room_id']);
+      });
+
+      socket.on('matched', function(data) {
+        console.log("matched!");
+        $("#isMatched").text("matched!!!");
+        $("#alarm").text("user : " + data['sid'] + " entered room : " + data['room_id']);
+      });
+      
+      socket.on('start-game', function(data) {
+        window.location.href = '/enter_snake';
+      });
+    });
+  </script>
+</body>
+
+</html>
