@@ -30,7 +30,8 @@ room_of_players = {}
 players_in_room = {} 
 last_created_room = ""
 
-@app.route("/", methods=["GET", "POST"])
+# @app.route("/", methods=["GET", "POST"])
+@app.route("/")
 def index():
     return render_template("index.html")
 
