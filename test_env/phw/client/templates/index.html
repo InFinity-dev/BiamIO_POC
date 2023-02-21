@@ -16,7 +16,7 @@
   <script>
     $(document).ready(function () {
       // Connect to the server
-      var socket = io.connect('http://' + document.domain + ':' + location.port);
+      var socket = io.connect('http://krafton604.iptime.org:7777');
 
       // Handle dot1-position event
       socket.on('dot1-position', function (data) {
