@@ -83,8 +83,7 @@
       } )
 
       // Handle reset button click event
-      $('#resetButton').click(function (event) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      $('#resetButton').click(function canvas_reset(event) {
         socket.emit('reset');
       });
 
@@ -121,6 +120,11 @@
         drawGraphPaper();
         // drawDot(data.dot1_x, data.dot1_y, 'red');
         // drawDot(data.dot2_x, data.dot2_y, 'blue');
+      });
+
+      socket.on('reset', function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawGraphPaper();
       });
     });
 

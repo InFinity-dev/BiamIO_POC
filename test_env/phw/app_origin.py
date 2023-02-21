@@ -64,8 +64,7 @@ def handle_move(data):
 # Handle reset event
 @socketio.on('reset')
 def handle_reset():
-    print(1)
-    emit('video')
+    emit('reset', broadcast=True)
 
 # Render the HTML template
 @app.route('/')
@@ -73,4 +72,4 @@ def index():
     return render_template('index.html')
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, host='0.0.0.0')
