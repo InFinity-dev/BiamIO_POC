@@ -3,70 +3,20 @@
 
 <head>
   <title>Real-time Dots</title>
-  <style>
-    canvas {
-      border: 1px solid black;
-    }
-  </style>
 </head>
 
 <body>
-  <h1>Real-time Dots</h1>
+  <h1>Join to Start Game</h1>
   <hr>
-  <canvas id="canvas" width="400" height="400"></canvas>
-  <form>
-    <select id="dot">
-      <option value="dot1">USER1</option>
-      <option value="dot2">USER2</option>
-    </select>
-  </form>
-  <button id="resetButton">Reset</button>
   <button id="joinButton">Join</button>
   <h2 id="isMatched"></h2>
+  <h2 id="alarm"></h2>
   <script src="//code.jquery.com/jquery-1.11.1.js"></script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.3/socket.io.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.0/socket.io.min.js"></script>
   <script>
     $(document).ready(function () {
       // Connect to the server
       var socket = io.connect('http://' + document.domain + ':' + location.port);
-
-      // Store canvas and context
-      var canvas = document.getElementById('canvas');
-      var ctx = canvas.getContext('2d');
-
-      // Draw dots on canvas
-      function drawDot(x, y, color) {
-        ctx.beginPath();
-        ctx.arc(x, y, 10, 0, 2 * Math.PI);
-        ctx.fillStyle = color;
-        ctx.fill();
-      }
-
-      function drawGraphPaper() {
-        // Get canvas element and context
-        var canvas = document.getElementById('canvas');
-        var ctx = canvas.getContext('2d');
-
-        // Set line width and color
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = '#CCCCCC';
-
-        // Draw vertical lines
-        for (var x = 0; x <= canvas.width; x += 20) {
-          ctx.beginPath();
-          ctx.moveTo(x, 0);
-          ctx.lineTo(x, canvas.height);
-          ctx.stroke();
-        }
-
-        // Draw horizontal lines
-        for (var y = 0; y <= canvas.height; y += 20) {
-          ctx.beginPath();
-          ctx.moveTo(0, y);
-          ctx.lineTo(canvas.width, y);
-          ctx.stroke();
-        }
-      }
 
       // Handle dot1-position event
       socket.on('dot1-position', function (data) {
@@ -90,48 +40,25 @@
 
       // Handle reset button click event
       $('#joinButton').click(function (event) {
-        socket.emit('join', {
-          'dot1_x': Math.floor(Math.random() * canvas.width),
-          'dot1_y': Math.floor(Math.random() * canvas.height),
-          'dot2_x': Math.floor(Math.random() * canvas.width),
-          'dot2_y': Math.floor(Math.random() * canvas.height),
-        });
+        socket.emit('join');
       });
 
-      socket.on('waiting', function() {
+      socket.on('waiting', function(data) {
         console.log("waiting...")
         $("#isMatched").text("waiting...");
+        $("#alarm").text("user : " + data['sid'] + " entered room : " + data['room_id']);
       });
 
-      socket.on('matched', function() {
+      socket.on('matched', function(data) {
         console.log("matched!");
         $("#isMatched").text("matched!!!");
-        // Handle canvas click event
-        $('#canvas').click(function (event) {
-          var x = event.offsetX;
-          var y = event.offsetY;
-          // var dot = (Math.random() < 0.5) ? 'dot1' : 'dot2';
-          var dot = $("#dot option:selected").val();
-          console.log(x, y, dot)
-          socket.emit('move', { 'dot': dot, 'x': x, 'y': y });
-        });
+        $("#alarm").text("user : " + data['sid'] + " entered room : " + data['room_id']);
       });
       
       socket.on('start-game', function(data) {
-        drawGraphPaper();
-        // drawDot(data.dot1_x, data.dot1_y, 'red');
-        // drawDot(data.dot2_x, data.dot2_y, 'blue');
+        window.location.href = '/enter_snake';
       });
     });
-
-    function getMyVideo() {
-      var canvas = document.getElementById('canvas');
-      if (canvas.getContext) {
-        var ctx = canvas.getContext('2d');
-
-        return document.getElementById('myvideo');
-      }
-    }
   </script>
 </body>
 
