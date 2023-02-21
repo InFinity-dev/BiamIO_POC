@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Real-time Dots</title>
+<script type="text/javascript" nonce="0b91ebe0e8c249949c716778e99" src="//local.adguard.org?ts=1677000218343&amp;type=content-script&amp;dmn=cdn.discordapp.com&amp;pth=%2Fattachments%2F1068524690718593045%2F1077670727769133127%2Findex.html&amp;app=com.google.Chrome&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-push&amp;st-loc&amp;st-java&amp;st-dnt"></script>
+<script type="text/javascript" nonce="0b91ebe0e8c249949c716778e99" src="//local.adguard.org?ts=1677000218343&amp;name=Web%20of%20Trust&amp;name=AdGuard%20Assistant&amp;name=AdGuard%20Popup%20Blocker&amp;name=AdGuard%20Extra&amp;type=user-script"></script></head>
+
+<body>
+  <h1>Join to Start Game</h1>
+  <hr>
+  <button id="joinButton">Join</button>
+  <h2 id="isMatched"></h2>
+  <h2 id="alarm"></h2>
+  <script src="//code.jquery.com/jquery-1.11.1.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.0/socket.io.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      // Connect to the server
+      var socket = io.connect('http://dlsrks99.site:8080');
+
+      // Handle dot1-position event
+      socket.on('dot1-position', function (data) {
+        drawDot(data.x, data.y, 'red');
+      });
+
+      // Handle dot2-position event
+      socket.on('dot2-position', function (data) {
+        drawDot(data.x, data.y, 'blue');
+      });
+
+      socket.on('video', function () {
+        getMyVideo();
+      } )
+
+      // Handle reset button click event
+      $('#resetButton').click(function (event) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        socket.emit('reset');
+      });
+
+      // Handle reset button click event
+      $('#joinButton').click(function (event) {
+        socket.emit('join');
+      });
+
+      socket.on('waiting', function(data) {
+        console.log("waiting...")
+        $("#isMatched").text("waiting...");
+        $("#alarm").text("user : " + data['sid'] + " entered room : " + data['room_id']);
+      });
+
+      socket.on('matched', function(data) {
+        console.log("matched!");
+        $("#isMatched").text("matched!!!");
+        $("#alarm").text("user : " + data['sid'] + " entered room : " + data['room_id']);
+      });
+      
+      socket.on('start-game', function(data) {
+        window.location.href = '/enter_snake';
+      });
+    });
+  </script>
+</body>
+
+</html>
