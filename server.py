@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit, join_room, leave_room, close_room, rooms, disconnect
 import random
 
@@ -13,16 +13,16 @@ clients = set()
 waiting_clients = set()
 
 @socketio.on('connect')
-def connect():
+def on_connect():
     clients.add(request.sid)
 
 @socketio.on('disconnect')
-def disconnect():
+def on_disconnect():
     clients.remove(request.sid)
     waiting_clients.discard(request.sid)
 
 @socketio.on('join_queue')
-def join_queue():
+def on_join_queue():
     waiting_clients.add(request.sid)
     if len(waiting_clients) > 1:
         # Match two random clients
