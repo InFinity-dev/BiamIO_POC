@@ -16,7 +16,7 @@
   <script>
     $(document).ready(function () {
       // Connect to the server
-      var socket = io.connect('http://krafton604.iptime.org:7777');
+      var socket = io.connect('http://krafton604.iptime.org');
 
       // Handle dot1-position event
       socket.on('dot1-position', function (data) {
@@ -31,12 +31,6 @@
       socket.on('video', function () {
         getMyVideo();
       } )
-
-      // Handle reset button click event
-      $('#resetButton').click(function (event) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        socket.emit('reset');
-      });
 
       // Handle reset button click event
       $('#joinButton').click(function (event) {
@@ -56,6 +50,7 @@
       });
       
       socket.on('start-game', function(data) {
+        console.log(data)
         window.location.href = '/enter_snake';
       });
     });

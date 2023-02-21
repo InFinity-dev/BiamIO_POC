@@ -25,6 +25,11 @@ app.config['SECRET_KEY'] = "roomfitisdead"
 
 socketio = SocketIO(app, cors_allowed_origins='*')
 
+waiting_players = []
+room_of_players = {}
+players_in_room = {} 
+last_created_room = ""
+
 ############################## SNAKE GAME LOGIC SECTION ##############################
 
 cap = cv2.VideoCapture(0)
@@ -107,6 +112,7 @@ class SnakeGameClass:
             self.points.append([cx, cy])
             # print(f'{self.points}')
 
+            # socketio.emit('game_data', {'sid' : request.sid})
             socketio.emit('game_data', {'head_x': cx, 'head_y': cy})
             socketio.emit('game_data', {'body_node': self.points})
 
@@ -180,11 +186,6 @@ class SnakeGameClass:
 game = SnakeGameClass("./static/food.png")
 ######################################################################################
 
-waiting_players = []
-room_of_players = {}
-players_in_room = {} 
-last_created_room = ""
-
 @app.route("/", methods=["GET", "POST"])
 def index():
     return render_template("index.html")
@@ -195,6 +196,9 @@ def test():
 
 @app.route("/enter_snake", methods=["GET", "POST"])
 def enter_snake():
+    # room_id = request.form['room_id']
+    # sid = request.form['sid']
+    # print(room_id, sid)
     return render_template("snake.html")
 
 @socketio.on('connect')
@@ -235,8 +239,8 @@ def handle_join():
         
         last_created_room = ""
         print(room_of_players)
-        emit('matched', {'room_id' : room_id, 'sid' : sid}, to=room_id, broadcast=True)
-        emit('start-game', to=room_id)
+        emit('matched', {'room_id' : room_id, 'sid' : sid}, to=room_id)
+        emit('start-game', {'room_id' : room_id, 'sid' : sid}, to=room_id)
         
 
 # 소켓 테스트용 1초마다 시간 쏴주는 함수
