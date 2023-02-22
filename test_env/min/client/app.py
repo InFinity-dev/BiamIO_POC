@@ -107,9 +107,6 @@ class SnakeGameClass:
             self.points.append([cx, cy])
             # print(f'{self.points}')
 
-            socketio.emit('game_data', {'head_x': cx, 'head_y': cy})
-            socketio.emit('game_data', {'body_node': self.points})
-
             distance = math.hypot(cx - px, cy - py)
             self.lengths.append(distance)
             # print(f'self.length -> {self.lengths}')
@@ -135,7 +132,6 @@ class SnakeGameClass:
                 self.score += 1
 
                 # print(self.score)
-                socketio.emit('game_data', {'score': self.score})
 
             # Draw Snake
             if self.points:
@@ -163,6 +159,7 @@ class SnakeGameClass:
             # opimg.fill(255)
             # cv2.polylines(opimg, [pts], False, (0, 255, 0), 3)
             # cv2.imshow('opimg',opimg)
+            socketio.emit('game_data', {'head_x': cx, 'head_y': cy, 'body_node': self.points, 'score': self.score})
 
             if -1 <= minDist <= 1:
                 pass
@@ -184,13 +181,12 @@ game = SnakeGameClass("./static/food.png")
 def index():
     return render_template("index.html")
 
-@app.route("/rtc", methods=["GET", "POST"])
-def rtc():
-    return render_template("rtc_test.html")
-
 @app.route("/enter_snake", methods=["GET", "POST"])
 def enter_snake():
-    return render_template("snake.html")
+    room_id = request.args.get('room_id')
+    sid = request.args.get('sid')
+    print(room_id, sid)
+    return render_template("snake.html", room_id = room_id, sid = sid)
 
 @socketio.on('connect')
 def test_connect():
