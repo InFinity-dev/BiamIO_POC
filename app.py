@@ -88,7 +88,8 @@ class SnakeGameClass:
     def randomFoodLocation(self):
         self.foodPoint = random.randint(100, 1000), random.randint(100, 600)
 
-    def draw_snakes(self, imgMain, points, score):
+    # TODO : 마지막 매개변수 Boolean 1 이면 내뱀 0이면 니뱀
+    def draw_snakes(self, imgMain, points, score, isMe):
         # Draw Snake
         if points:
             for i, point in enumerate(points):
@@ -209,12 +210,15 @@ class SnakeGameClass:
                 o_body_node = receive_Data["opp_body_node"]
                 o_score = receive_Data["opp_score"]
 
-            imgMain = self.draw_snakes(imgMain, o_body_node, o_score)
+            # 0 이면 상대 뱀
+            imgMain = self.draw_snakes(imgMain, o_body_node, o_score, 0)
 
             # update and draw own snake
             self.my_snake_update(HandPoints, o_body_node)
             imgMain = self.draw_Food(imgMain)
-            imgMain = self.draw_snakes(imgMain, self.points, self.score)
+
+            # 1 이면 내 뱀
+            imgMain = self.draw_snakes(imgMain, self.points, self.score, 1)
 
         return imgMain
 
