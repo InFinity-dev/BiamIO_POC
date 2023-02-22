@@ -287,7 +287,7 @@ def snake():
         global opponent_data
         global game
         global gameover_flag
-        
+
         while True:
             success, img = cap.read()
             img = cv2.flip(img, 1)
@@ -310,9 +310,9 @@ def snake():
                 print("game ended")
                 gameover_flag = False
                 time.sleep(1)
+                socketio.emit('gameover')
+                time.sleep(2)
                 break
-            else:
-                pass
 
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 

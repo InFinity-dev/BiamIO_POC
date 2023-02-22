@@ -79,15 +79,8 @@
         }
       });
 
-      client_socket.on("connect", function () {
-        console.log("Connected to server");
-      });
-
-      client_socket.on("opp_data_to_test_server", function (data) {
-        console.log(
-          "Received opp_data_to_test_server event from server:",
-          data
-        );
+      client_socket.on("gameover", function () {
+        window.location.href = '/'
       });
     </script>
   </body>
