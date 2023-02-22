@@ -33,6 +33,13 @@ cap.set(4, 720)
 cap.set(cv2.CAP_PROP_FPS, 60)
 fps = cap.get(cv2.CAP_PROP_FPS)
 
+# color templates
+red = (0, 0, 255) # red
+megenta = (255, 0, 255) # magenta
+green = (0, 255, 0) # green
+yellow = (0, 255, 255) # yellow
+cyan = (255, 255, 102) # cyan
+
 detector = HandDetector(detectionCon=0.5, maxHands=1)
 
 
@@ -94,12 +101,12 @@ class SnakeGameClass:
 
     def draw_snakes(self, imgMain, points, score, isMe):
 
-        maincolor = (0, 0, 255) # red
-        headcolor = (255, 0, 255) # magenta
+        headcolor = cyan
+        maincolor = red
 
         if isMe:
-            maincolor = (0, 255, 0) # green
-
+            headcolor = megenta
+            maincolor = green
             # Draw Score
             cvzone.putTextRect(imgMain, f'Score: {score}', [0, 40],
                                scale=3, thickness=3, offset=10)
