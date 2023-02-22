@@ -27,11 +27,9 @@
     let localStream;
     let remoteStream;
     let pc;
+    let socket = io.connect('http://krafton604.iptime.org');
 
     $(document).ready(function () {
-        // Connect to the server
-        var socket = io.connect('http://krafton604.iptime.org');
-
         // Handle reset button click event
         $('#joinButton').click(function (event) {
             socket.emit('join');
@@ -43,137 +41,57 @@
             $("#isMatched").text("waiting...");
             $("#alarm").text("user : " + data['sid'] + " entered room : " + data['room_id']);
         });
-    });
 
-    socket.on('matched', function (room_id) {
-        console.log("matched!");
-        console.log(room_id);
-        $("#isMatched").text("matched!!!");
-        $("#alarm").text("You are in room " + room_id);
+        socket.on('matched', function (room_id) {
+            console.log("matched!");
+            console.log(room_id);
+            $("#isMatched").text("matched!!!");
+            $("#alarm").text("You are in room " + room_id);
 
-        // Create a peer connection
-        var pc = new RTCPeerConnection();
+            // Create a peer connection
+            var pc = new RTCPeerConnection();
 
-        // Add the local stream to the peer connection
-        navigator.mediaDevices.getUserMedia({video: true, audio: true})
-            .then(function (stream) {
-                stream.getTracks().forEach(track => {
-                    pc.addTrack(track, stream);
+            // Add the local stream to the peer connection
+            navigator.mediaDevices.getUserMedia({video: true, audio: true})
+                .then(function (stream) {
+                    stream.getTracks().forEach(track => {
+                        pc.addTrack(track, stream);
+                    });
+                    $("#localVideo").attr("srcObject", stream);
                 });
-                $("#localVideo").attr("srcObject", stream);
+
+            // Send ICE candidates to the other peer
+            pc.onicecandidate = function (event) {
+                if (event.candidate) {
+                    socket.emit('ice-candidate', {candidate: event.candidate, room_id: room_id});
+                }
+            };
+
+            // Receive ICE candidates from the other peer
+            socket.on('ice-candidate', function (data) {
+                pc.addIceCandidate(new RTCIceCandidate(data.candidate));
             });
 
-        // Send ICE candidates to the other peer
-        pc.onicecandidate = function (event) {
-            if (event.candidate) {
-                socket.emit('ice-candidate', {candidate: event.candidate, room_id: room_id});
-            }
-        };
+            // Handle offer from the other peer
+            socket.on('offer', function (data) {
+                pc.setRemoteDescription(new RTCSessionDescription(data.offer));
 
-        // Receive ICE candidates from the other peer
-        socket.on('ice-candidate', function (data) {
-            pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-        });
-
-        // Handle offer from the other peer
-        socket.on('offer', function (data) {
-            pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-
-            // Create an answer and set it as the local description
-            pc.createAnswer()
-                .then(function (answer) {
-                    return pc.setLocalDescription(answer);
-                })
-                .then(function () {
-                    // Send the answer to the other peer
-                    socket.emit('answer', {answer: pc.localDescription, room_id: room_id});
-                });
-        });
-
-        // Receive the answer from the other peer and set it as the remote description
-        socket.on('answer', function (data) {
-            pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-        });
-
-        // Add the remote stream to the video element
-        pc.ontrack = function (event) {
-            $("#remoteVideo").attr("srcObject", event.streams[0]);
-        };
-    });
-
-    function initWebRTC() {
-        // Get a handle to the local video stream
-        navigator.mediaDevices.getUserMedia({video: true, audio: true})
-            .then(stream => {
-                // Display the local video stream on the video element
-                localVideo.srcObject = stream;
-                localStream = stream;
-
-                // Create the PeerConnection object
-                pc = new RTCPeerConnection();
-
-                // Add the local stream to the PeerConnection object
-                localStream.getTracks().forEach(track => {
-                    pc.addTrack(track, localStream);
-                });
-
-                // When a remote track is added, display it on the remote video element
-                pc.ontrack = event => {
-                    remoteVideo.srcObject = event.streams[0];
-                    remoteStream = event.streams[0];
-                };
-
-                // When the PeerConnection object generates an ICE candidate, send it to the other user
-                pc.onicecandidate = event => {
-                    if (event.candidate) {
-                        socket.emit('icecandidate', event.candidate);
-                    }
-                };
-
-                // When the other user sends an ICE candidate, add it to the PeerConnection object
-                socket.on('icecandidate', candidate => {
-                    pc.addIceCandidate(new RTCIceCandidate(candidate));
-                });
-
-                // Create an offer and set it as the local description for the PeerConnection object
-                pc.createOffer()
-                    .then(offer => {
-                        return pc.setLocalDescription(offer);
+                // Create an answer and set it as the local description
+                pc.createAnswer()
+                    .then(function (answer) {
+                        return pc.setLocalDescription(answer);
                     })
-                    .then(() => {
-                        // Send the offer to the other user
-                        socket.emit('offer', pc.localDescription);
+                    .then(function () {
+                        // Send the answer to the other peer
+                        socket.emit('answer', {answer: pc.localDescription});
                     })
-                    .catch(error => console.log(error));
-            })
-            .catch(error => console.log(error));
-    }
-
-    // When the 'start-game' event is received, initiate the WebRTC connection
-    socket.on('start-game', function (data) {
-        initWebRTC();
-    });
-
-    // When an offer is received, create an answer and set it as the local description for the PeerConnection object
-    socket.on('offer', offer => {
-        pc.setRemoteDescription(new RTCSessionDescription(offer))
-            .then(() => {
-                return pc.createAnswer();
-            })
-            .then(answer => {
-                return pc.setLocalDescription(answer);
-            })
-            .then(() => {
-                // Send the answer to the other user
-                socket.emit('answer', pc.localDescription);
-            })
-            .catch(error => console.log(error));
-    });
-
-    // When an answer is received, set it as the remote description for the PeerConnection object
-    socket.on('answer', answer => {
-        pc.setRemoteDescription(new RTCSessionDescription(answer));
+                    .catch(function (err) {
+                        console.error(err);
+                    });
+            });
+        });
     });
 </script>
 </body>
+
 </html>
