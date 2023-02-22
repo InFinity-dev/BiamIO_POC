@@ -16,8 +16,8 @@
   <script>
     $(document).ready(function () {
       // Connect to the server
-      var socket = io.connect('http://krafton604.iptime.org');
-      // var socket = io.connect('192.168.0.43:8088');
+      // var socket = io.connect('http://krafton604.iptime.org');
+      var socket = io.connect('192.168.0.5:8088');
 
       // Handle reset button click event
       $('#joinButton').click(function (event) {
@@ -40,7 +40,9 @@
       
       socket.on('start-game', function(data) {
         console.log(data)
-        window.location.href = '/enter_snake';
+        let url = '/enter_snake?room_id=' + data['room_id'] + '&sid=' + data['sid'];
+        console.log(url)
+        window.location.href = url;
       });
     });
   </script>
