@@ -88,22 +88,25 @@ class SnakeGameClass:
     def randomFoodLocation(self):
         self.foodPoint = random.randint(100, 1000), random.randint(100, 600)
 
-    # TODO : 마지막 매개변수 Boolean 1 이면 내뱀 0이면 니뱀
     def draw_snakes(self, imgMain, points, score, isMe):
+        
+        maincolor=(255, 255, 255)
+    
+        if isMe:
+            maincolor=(117, 109, 244)
+            # Draw Score
+            cvzone.putTextRect(imgMain, f'Score: {score}', [50, 80], 
+                               scale=3, thickness=3, offset=10)
+        
         # Draw Snake
         if points:
-            for i, point in enumerate(points):
-                cv2.line(imgMain, points[i][1], points[i][0], (0, 0, 255), 20)
-            cv2.circle(imgMain, points[-1][1], 20, (0, 255, 0), cv2.FILLED)
+            cv2.circle(imgMain, points[-1][1], 20, maincolor, cv2.FILLED)
 
-        cvzone.putTextRect(imgMain, f'Score: {score}', [50, 80],
-                           scale=3, thickness=3, offset=10)
-
-        pts = np.array(points[:-3], np.int32)
+        pts = np.array(points, np.int32)
         if len(pts.shape) == 3:
             pts = pts[:, 1]
         pts = pts.reshape((-1, 1, 2))
-        cv2.polylines(imgMain, np.int32([pts]), False, (0, 255, 0), 3)
+        cv2.polylines(imgMain, np.int32([pts]), False, maincolor, 3)
 
         return imgMain
 
@@ -183,7 +186,7 @@ class SnakeGameClass:
         # ---- Collision ----
         # print(self.points[-1])
         # print(self.points[:-5])
-        if self.isCollision(self.points[-1], o_bodys[:-5]):
+        if self.isCollision(self.points[-1], o_bodys):
             print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Hit")
             self.gameOver = True
             self.points = []  # all points of the snake
@@ -216,7 +219,6 @@ class SnakeGameClass:
             # update and draw own snake
             self.my_snake_update(HandPoints, o_body_node)
             imgMain = self.draw_Food(imgMain)
-
             # 1 이면 내 뱀
             imgMain = self.draw_snakes(imgMain, self.points, self.score, 1)
 
