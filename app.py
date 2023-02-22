@@ -247,9 +247,12 @@ def index():
 
 @app.route("/enter_snake", methods=["GET", "POST"])
 def enter_snake():
+    global game
     room_id = request.args.get('room_id')
     sid = request.args.get('sid')
     print(room_id, sid)
+
+    game = SnakeGameClass("./static/food.png")
     return render_template("snake.html", room_id=room_id, sid=sid)
 
 
@@ -304,10 +307,10 @@ def snake():
                    b'Content-Type: image/jpeg\r\n\r\n' + img_encoded.tobytes() + b'\r\n')
 
             if gameover_flag:
-                time.sleep(3)
                 print("game ended")
-                game = SnakeGameClass("./static/food.png")
                 gameover_flag = False
+                time.sleep(1)
+                break
             else:
                 pass
 
