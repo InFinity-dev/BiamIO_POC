@@ -56,7 +56,7 @@ def handle_join():
         room_of_players[request.sid] = room_id
         
         last_created_room = ""
-        print(room_of_players)
+        # print(room_of_players)
         emit('matched', {'room_id' : room_id, 'sid' : request.sid}, to=room_id)
         emit('start-game', {'room_id' : room_id, 'sid' : request.sid}, to=request.sid)
         emit('start-game', {'room_id' : room_id, 'sid' : host_sid}, to=host_sid)
@@ -71,8 +71,8 @@ def send_data(data):
     room_id = data['room_id']
     sid = data['sid']
 
-    print(head_x, head_y, score, room_id, sid)
-    emit('opp_data', {'opp_head_x' : head_x, 'opp_head_y' : head_y, 'opp_body_node' : body_node, 'opp_score' : score, 'opp_room_id' : room_id, 'opp_sid' : sid}, broadcast=True, include_self=False)
+    # print(head_x, head_y, score, room_id, sid)
+    socketio.emit('opp_data', {'opp_head_x' : head_x, 'opp_head_y' : head_y, 'opp_body_node' : body_node, 'opp_score' : score, 'opp_room_id' : room_id, 'opp_sid' : sid}, broadcast=True, include_self=False)
 
 
 # 소켓 테스트용 1초마다 시간 쏴주는 함수
