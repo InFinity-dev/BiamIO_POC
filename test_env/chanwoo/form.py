@@ -38,5 +38,6 @@ while True:
     cv2.imshow("Image", img)
     if cv2.waitKey(1) == ord('q'):
         break
-    
+
+sock.close()
 cv2.destroyAllWindows()
