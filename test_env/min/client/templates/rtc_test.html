@@ -1,8 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>WebRTC Video Chat</title>
+    <title>RTC</title>
 </head>
 <body>
 <h3>Local Video:</h3>
@@ -10,97 +9,6 @@
 
 <h3>Remote Video:</h3>
 <video id="remoteVideo" autoplay playsinline width="320" height="240"></video>
-
-<!-- Import the socket.io library -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.0/socket.io.min.js"></script>
-
-<script>
-    // Get the local video element
-    const localVideo = document.querySelector('#localVideo');
-
-    // Get the remote video element
-    const remoteVideo = document.querySelector('#remoteVideo');
-
-    // Connect to the signaling server
-    const socket = io();
-
-    // Set up the WebRTC connection
-    let localStream;
-    let remoteStream;
-    let pc;
-
-    function initWebRTC() {
-        // Get a handle to the local video stream
-        navigator.mediaDevices.getUserMedia({video: true, audio: true})
-            .then(stream => {
-                // Display the local video stream on the video element
-                localVideo.srcObject = stream;
-                localStream = stream;
-
-                // Create the PeerConnection object
-                pc = new RTCPeerConnection();
-
-                // Add the local stream to the PeerConnection object
-                localStream.getTracks().forEach(track => {
-                    pc.addTrack(track, localStream);
-                });
-
-                // When a remote track is added, display it on the remote video element
-                pc.ontrack = event => {
-                    remoteVideo.srcObject = event.streams[0];
-                    remoteStream = event.streams[0];
-                };
-
-                // When the PeerConnection object generates an ICE candidate, send it to the other user
-                pc.onicecandidate = event => {
-                    if (event.candidate) {
-                        socket.emit('icecandidate', event.candidate);
-                    }
-                };
-
-                // When the other user sends an ICE candidate, add it to the PeerConnection object
-                socket.on('icecandidate', candidate => {
-                    pc.addIceCandidate(new RTCIceCandidate(candidate));
-                });
-
-                // Create an offer and set it as the local description for the PeerConnection object
-                pc.createOffer()
-                    .then(offer => {
-                        return pc.setLocalDescription(offer);
-                    })
-                    .then(() => {
-                        // Send the offer to the other user
-                        socket.emit('offer', pc.localDescription);
-                    })
-                    .catch(error => console.log(error));
-            })
-            .catch(error => console.log(error));
-    }
-
-    // When the 'start-game' event is received, initiate the WebRTC connection
-    socket.on('start-game', function(data) {
-        initWebRTC();
-    });
-
-    // When an offer is received, create an answer and set it as the local description for the PeerConnection object
-    socket.on('offer', offer => {
-        pc.setRemoteDescription(new RTCSessionDescription(offer))
-            .then(() => {
-                return pc.createAnswer();
-            })
-            .then(answer => {
-                return pc.setLocalDescription(answer);
-            })
-            .then(() => {
-                // Send the answer to the other user
-                socket.emit('answer', pc.localDescription);
-            })
-            .catch(error => console.log(error));
-    });
-
-    // When an answer is received, set it as the remote description for the PeerConnection object
-    socket.on('answer', answer => {
-        pc.setRemoteDescription(new RTCSessionDescription(answer));
-    });
-</script>
 </body>
+
+</html>
