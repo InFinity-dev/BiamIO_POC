@@ -16,8 +16,80 @@
 <video id="remoteVideo" autoplay playsinline width="320" height="240"></video>
 <script src="/socket.io/socket.io.js"></script>
 <script src="//code.jquery.com/jquery-1.11.1.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.0/socket.io.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js" integrity="sha512-9r+c1rU0WhWLRp8LSvIBh3hX3b5Lkr2QWzEPmaJvAcsgC5R5gDJM5d5H5PpLcX9BikzLl8WU6d/pDX6xnMeUw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
+  $(document).ready(function () {
+    // Connect to the server
+    var socket = io.connect('http://krafton604.iptime.org');
+
+    // Handle reset button click event
+    $('#joinButton').click(function (event) {
+      socket.emit('join');
+    });
+
+    socket.on('waiting', function(data) {
+      console.log("waiting...");
+      console.log(data);
+      $("#isMatched").text("waiting...");
+      $("#alarm").text("user : " + data['sid'] + " entered room : " + data['room_id']);
+    });
+
+    socket.on('matched', function(room_id) {
+      console.log("matched!");
+      console.log(room_id);
+      $("#isMatched").text("matched!!!");
+      $("#alarm").text("You are in room " + room_id);
+
+      // Create a peer connection
+      var pc = new RTCPeerConnection();
+
+      // Add the local stream to the peer connection
+      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+              .then(function(stream) {
+                stream.getTracks().forEach(track => {
+                  pc.addTrack(track, stream);
+                });
+                $("#localVideo").attr("srcObject", stream);
+              });
+
+      // Send ICE candidates to the other peer
+      pc.onicecandidate = function(event) {
+        if (event.candidate) {
+          socket.emit('ice-candidate', { candidate: event.candidate, room_id: room_id });
+        }
+      };
+
+      // Receive ICE candidates from the other peer
+      socket.on('ice-candidate', function(data) {
+        pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+      });
+
+      // Handle offer from the other peer
+      socket.on('offer', function(data) {
+        pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+
+        // Create an answer and set it as the local description
+        pc.createAnswer()
+                .then(function(answer) {
+                  return pc.setLocalDescription(answer);
+                })
+                .then(function() {
+                  // Send the answer to the other peer
+                  socket.emit('answer', { answer: pc.localDescription, room_id: room_id });
+                });
+      });
+
+      // Receive the answer from the other peer and set it as the remote description
+      socket.on('answer', function(data) {
+        pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+      });
+
+      // Add the remote stream to the video element
+      pc.ontrack = function(event) {
+        $("#remoteVideo").attr("srcObject", event.streams[0]);
+      };
+    });
+  });
   // Get the local video element
   const localVideo = document.querySelector('#localVideo');
 
@@ -104,78 +176,6 @@
   // When an answer is received, set it as the remote description for the PeerConnection object
   socket.on('answer', answer => {
     pc.setRemoteDescription(new RTCSessionDescription(answer));
-  });
-  $(document).ready(function () {
-    // Connect to the server
-    var socket = io.connect('http://krafton604.iptime.org');
-
-    // Handle reset button click event
-    $('#joinButton').click(function (event) {
-      socket.emit('join');
-    });
-
-    socket.on('waiting', function(data) {
-      console.log("waiting...");
-      console.log(data);
-      $("#isMatched").text("waiting...");
-      $("#alarm").text("user : " + data['sid'] + " entered room : " + data['room_id']);
-    });
-
-    socket.on('matched', function(room_id) {
-      console.log("matched!");
-      console.log(room_id);
-      $("#isMatched").text("matched!!!");
-      $("#alarm").text("You are in room " + room_id);
-
-      // Create a peer connection
-      var pc = new RTCPeerConnection();
-
-      // Add the local stream to the peer connection
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-              .then(function(stream) {
-                stream.getTracks().forEach(track => {
-                  pc.addTrack(track, stream);
-                });
-                $("#localVideo").attr("srcObject", stream);
-              });
-
-      // Send ICE candidates to the other peer
-      pc.onicecandidate = function(event) {
-        if (event.candidate) {
-          socket.emit('ice-candidate', { candidate: event.candidate, room_id: room_id });
-        }
-      };
-
-      // Receive ICE candidates from the other peer
-      socket.on('ice-candidate', function(data) {
-        pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-      });
-
-      // Handle offer from the other peer
-      socket.on('offer', function(data) {
-        pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-
-        // Create an answer and set it as the local description
-        pc.createAnswer()
-                .then(function(answer) {
-                  return pc.setLocalDescription(answer);
-                })
-                .then(function() {
-                  // Send the answer to the other peer
-                  socket.emit('answer', { answer: pc.localDescription, room_id: room_id });
-                });
-      });
-
-      // Receive the answer from the other peer and set it as the remote description
-      socket.on('answer', function(data) {
-        pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-      });
-
-      // Add the remote stream to the video element
-      pc.ontrack = function(event) {
-        $("#remoteVideo").attr("srcObject", event.streams[0]);
-      };
-    });
   });
 </script>
 </body>
