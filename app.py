@@ -101,11 +101,11 @@ class SnakeGameClass:
 
     def draw_snakes(self, imgMain, points, score, isMe):
 
-        headcolor = cyan
+        bodercolor = cyan
         maincolor = red
 
         if isMe:
-            headcolor = megenta
+            bodercolor = megenta
             maincolor = green
             # Draw Score
             cvzone.putTextRect(imgMain, f'Score: {score}', [0, 40],
@@ -113,7 +113,7 @@ class SnakeGameClass:
 
         # Draw Snake
         if points:
-            cv2.circle(imgMain, points[-1][1], 20, headcolor, cv2.FILLED)
+            cv2.circle(imgMain, points[-1][1], 20, bodercolor, cv2.FILLED)
             cv2.circle(imgMain, points[-1][1], 15, maincolor, cv2.FILLED)
 
         pts = np.array(points, np.int32)
