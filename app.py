@@ -202,6 +202,7 @@ class SnakeGameClass:
             self.randomFoodLocation()
 
     def update(self, imgMain, receive_Data, HandPoints=[]):
+        global gameover_flag
 
         if self.gameOver:
             # pass
@@ -209,6 +210,7 @@ class SnakeGameClass:
                                scale=7, thickness=5, offset=20)
             cvzone.putTextRect(imgMain, f'Your Score: {self.score}', [300, 550],
                                scale=7, thickness=5, offset=20)
+            gameover_flag = True
         else:
             # draw others snake
             o_body_node = []
@@ -233,6 +235,7 @@ class SnakeGameClass:
 game = SnakeGameClass("./static/food.png")
 
 opponent_data = []
+gameover_flag = False
 ######################################################################################
 
 @app.route("/", methods=["GET", "POST"])
@@ -270,15 +273,17 @@ def opp_data_transfer(data):
     global opponent_data
     opponent_data = data['data']
     # socketio.emit('opp_data_to_test_server', {'data' : data}, broadcast=True)
-    print('Received data from client:', opp_head_x, opp_head_y, opp_score, opp_sid)
+    # print('Received data from client:', opp_head_x, opp_head_y, opp_score, opp_sid)
 
 
 @app.route('/snake')
 def snake():
     def generate():
+        global opponent_data
+        global game
+        global gameover_flag
+        
         while True:
-            global opponent_data
-
             success, img = cap.read()
             img = cv2.flip(img, 1)
             hands, img = detector.findHands(img, flipType=False)
@@ -295,6 +300,14 @@ def snake():
             _, img_encoded = cv2.imencode('.jpg', img)
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + img_encoded.tobytes() + b'\r\n')
+
+            if gameover_flag:
+                time.sleep(3)
+                print("game ended")
+                game = SnakeGameClass("./static/food.png")
+                gameover_flag = False
+            else:
+                pass
 
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
