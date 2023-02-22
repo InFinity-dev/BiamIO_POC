@@ -38,7 +38,7 @@ red = (0, 0, 255) # red
 megenta = (255, 0, 255) # magenta
 green = (0, 255, 0) # green
 yellow = (0, 255, 255) # yellow
-cyan = (255, 255, 102) # cyan
+cyan = (255, 255, 0) # cyan
 
 detector = HandDetector(detectionCon=0.5, maxHands=1)
 
