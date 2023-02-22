@@ -186,7 +186,7 @@ def index():
 
 @app.route("/rtc", methods=["GET", "POST"])
 def rtc():
-    return render_template("rtc_test2.html")
+    return render_template("rtc_test.html")
 
 @app.route("/enter_snake", methods=["GET", "POST"])
 def enter_snake():
