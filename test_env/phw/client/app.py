@@ -17,11 +17,13 @@ from aiohttp import web
 import jinja2
 import aiohttp_jinja2
 import uuid
+import logging
 from engineio.payload import Payload
 Payload.max_decode_packets = 200
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "roomfitisdead"
+app.config['log_output'] = True
 
 socketio = SocketIO(app, cors_allowed_origins='*')
 
@@ -174,8 +176,14 @@ class SnakeGameClass:
 
         return imgMain
 
+    def update_opponent(self, imgMain, data):
+        if data:
+            cv2.circle(imgMain, [int(data['opp_head_x']), int(data['opp_head_y'])], 20, (0, 0, 255), cv2.FILLED)
+
 game = SnakeGameClass("./static/food.png")
 ######################################################################################
+
+opponent_data = {}
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -185,6 +193,7 @@ def index():
 def enter_snake():
     room_id = request.args.get('room_id')
     sid = request.args.get('sid')
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! : ", room_id, sid)
     print(room_id, sid)
     return render_template("snake.html", room_id = room_id, sid = sid)
 
@@ -195,6 +204,20 @@ def test_connect():
 @socketio.on('disconnect')
 def test_disconnect():
     print('Client disconnected')
+
+@socketio.on('opp_data_transfer')
+def opp_data_transfer(data):
+    opp_head_x = data['data']['opp_head_x']
+    opp_head_y = data['data']['opp_head_y']
+    opp_body_node = data['data']['opp_body_node']
+    opp_score = data['data']['opp_score']
+    opp_room_id = data['data']['opp_room_id']
+    opp_sid = data['data']['opp_sid']
+
+    global opponent_data
+    opponent_data = data
+    # socketio.emit('opp_data_to_test_server', {'data' : data}, broadcast=True)
+    print('Received data from client:', opp_head_x, opp_head_y, opp_score, opp_sid)
 
 @app.route('/snake')
 def snake():
@@ -211,13 +234,18 @@ def snake():
                 pointIndex = lmList[8][0:2]
 
             img = game.update(img, pointIndex)
+            
+            # if opponent_data:
+            #     print(opponent_data)
+            #     game.update_opponent(img, opponent_data)
 
             # encode the image as a JPEG string
             _, img_encoded = cv2.imencode('.jpg', img)
+
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + img_encoded.tobytes() + b'\r\n')
     
-    
+    # data = request.args.get('data')
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
