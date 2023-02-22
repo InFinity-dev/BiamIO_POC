@@ -1,5 +1,5 @@
 # BiamIO_POC
-## TODO
+## TODO (2023-2-23)
 1. Socket / UDP hole punch / WebRTC 로 상대방 영상 받아오기
 2. 상대 뱀 / 내 뱀 색 다르게 하기
 3. 뱀 조작감 향상 시키기
