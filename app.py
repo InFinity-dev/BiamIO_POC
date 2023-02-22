@@ -30,8 +30,11 @@ socketio = SocketIO(app, cors_allowed_origins='*')
 cap = cv2.VideoCapture(0)
 cap.set(3, 1280)
 cap.set(4, 720)
+cap.set(cv2.CAP_PROP_FPS, 60)
+fps = cap.get(cv2.CAP_PROP_FPS)
 
 detector = HandDetector(detectionCon=0.5, maxHands=1)
+
 
 class SnakeGameClass:
     def __init__(self, pathFood):
@@ -39,7 +42,7 @@ class SnakeGameClass:
         self.lengths = []  # distance between each point
         self.currentLength = 0  # total length of the snake
         self.allowedLength = 150  # total allowed Length
-        self.previousHead = 600, 350  # previous head point => random 값으로 주기
+        self.previousHead = random.randint(100, 1000), random.randint(100, 600)
 
         self.speed = 0.1
         self.velocityX = random.choice([-1, 0, 1])
@@ -57,11 +60,11 @@ class SnakeGameClass:
     def ccw(self, p, a, b):
         vect_sub_ap = [a[0] - p[0], a[1] - p[1]]
         vect_sub_bp = [b[0] - p[0], b[1] - p[1]]
-        return vect_sub_ap[0] * vect_sub_bp[1] - vect_sub_ap[1] * vect_sub_bp[0];
+        return vect_sub_ap[0] * vect_sub_bp[1] - vect_sub_ap[1] * vect_sub_bp[0]
 
     def segmentIntersects(self, p1_a, p1_b, p2_a, p2_b):
-        ab = self.ccw(p1_a, p1_b, p2_a) * self.ccw(p1_a, p1_b, p2_b);
-        cd = self.ccw(p2_a, p2_b, p1_a) * self.ccw(p2_a, p2_b, p1_b);
+        ab = self.ccw(p1_a, p1_b, p2_a) * self.ccw(p1_a, p1_b, p2_b)
+        cd = self.ccw(p2_a, p2_b, p1_a) * self.ccw(p2_a, p2_b, p1_b)
 
         if (ab == 0 and cd == 0):
             if (p1_b[0] < p1_a[0] and p1_b[1] < p1_a[1]):
@@ -70,7 +73,7 @@ class SnakeGameClass:
                 p2_a, p2_b = p2_b, p2_a
             return not ((p1_b[0] < p2_a[0] and p1_b[1] < p2_a[1]) or (p2_b[0] < p1_a[0] and p2_b[1] < p1_a[1]))
 
-        return ab <= 0 and cd <= 0;
+        return ab <= 0 and cd <= 0
 
     def isCollision(self, u1_head_pt, u2_pts):
         if not u2_pts:
@@ -83,30 +86,32 @@ class SnakeGameClass:
                 print(u2_pt)
                 return True
         return False
+
     # ---collision function---end
 
     def randomFoodLocation(self):
         self.foodPoint = random.randint(100, 1000), random.randint(100, 600)
 
     def draw_snakes(self, imgMain, points, score, isMe):
-        
-        maincolor=(255, 255, 255)
-    
+
+        maincolor = (0, 0, 255)
+
         if isMe:
-            maincolor=(117, 109, 244)
+            maincolor = (0, 255, 0)
+
             # Draw Score
-            cvzone.putTextRect(imgMain, f'Score: {score}', [50, 80], 
+            cvzone.putTextRect(imgMain, f'Score: {score}', [50, 80],
                                scale=3, thickness=3, offset=10)
-        
+
         # Draw Snake
         if points:
-            cv2.circle(imgMain, points[-1][1], 20, maincolor, cv2.FILLED)
+            cv2.circle(imgMain, points[-1][1], 15, maincolor, cv2.FILLED)
 
         pts = np.array(points, np.int32)
         if len(pts.shape) == 3:
             pts = pts[:, 1]
         pts = pts.reshape((-1, 1, 2))
-        cv2.polylines(imgMain, np.int32([pts]), False, maincolor, 3)
+        cv2.polylines(imgMain, np.int32([pts]), False, maincolor, 7)
 
         return imgMain
 
@@ -181,7 +186,7 @@ class SnakeGameClass:
             self.allowedLength += 50
             self.score += 1
 
-        socketio.emit('game_data', {'head_x': cx, 'head_y': cy, 'body_node': self.points, 'score': self.score})
+        socketio.emit('game_data', {'head_x': cx, 'head_y': cy, 'body_node': self.points, 'score': self.score, 'fps' : fps})
 
         # ---- Collision ----
         # print(self.points[-1])
