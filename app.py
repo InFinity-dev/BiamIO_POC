@@ -24,7 +24,7 @@ Payload.max_decode_packets = 200
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "roomfitisdead"
 
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins='*')
 
 ############################## SNAKE GAME LOGIC SECTION ##############################
 

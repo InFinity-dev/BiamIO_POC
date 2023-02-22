@@ -9,8 +9,6 @@ import numpy as np
 from cvzone.HandTrackingModule import HandDetector
 from flask import Flask, render_template, Response, request, redirect, url_for, session
 from flask_socketio import SocketIO, emit, join_room
-from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription
-from aiortc.contrib.signaling import object_from_string, object_to_string
 import os
 import ssl
 from distutils.util import strtobool
@@ -34,55 +32,6 @@ cap.set(3, 1280)
 cap.set(4, 720)
 
 detector = HandDetector(detectionCon=0.5, maxHands=1)
-
-class WebRTC:
-    def __init__(self, socketio, room_id):
-        self.socketio = socketio
-        self.room_id = room_id
-        self.pc = RTCPeerConnection()
-        self.pc.on("iceconnectionstatechange", self.on_ice_connection_state_change)
-        self.pc.on("track", self.on_track)
-
-    async def create_offer(self):
-        self.pc.addTransceiver("audio")
-        self.pc.addTransceiver("video")
-        self.local_video = MediaStreamTrack()
-        self.pc.addTrack(self.local_video)
-
-        offer = await self.pc.createOffer()
-        await self.pc.setLocalDescription(offer)
-
-        self.socketio.emit("webrtc_offer", {
-            "room_id": self.room_id,
-            "sdp": object_to_string(self.pc.localDescription),
-        })
-
-    async def set_remote_description(self, sdp):
-        await self.pc.setRemoteDescription(RTCSessionDescription(sdp))
-        answer = await self.pc.createAnswer()
-        await self.pc.setLocalDescription(answer)
-
-        self.socketio.emit("webrtc_answer", {
-            "room_id": self.room_id,
-            "sdp": object_to_string(self.pc.localDescription),
-        })
-
-    def add_ice_candidate(self, candidate):
-        self.pc.addIceCandidate(candidate)
-
-    def on_ice_connection_state_change(self):
-        if self.pc.iceConnectionState == "failed":
-            self.socketio.emit("webrtc_error", {
-                "room_id": self.room_id,
-                "message": "WebRTC connection failed",
-            })
-
-    def on_track(self, track):
-        self.socketio.emit("webrtc_track", {
-            "room_id": self.room_id,
-            "track_id": track.id,
-        })
-
 
 class SnakeGameClass:
     def __init__(self, pathFood):
@@ -231,18 +180,13 @@ class SnakeGameClass:
 game = SnakeGameClass("./static/food.png")
 ######################################################################################
 
-waiting_players = []
-room_of_players = {}
-players_in_room = {} 
-last_created_room = ""
-
 @app.route("/", methods=["GET", "POST"])
 def index():
     return render_template("index.html")
 
-@app.route("/test", methods=["GET", "POST"])
-def test():
-    return render_template("test.html")
+@app.route("/rtc", methods=["GET", "POST"])
+def rtc():
+    return render_template("rtc_test2.html")
 
 @app.route("/enter_snake", methods=["GET", "POST"])
 def enter_snake():
@@ -255,53 +199,6 @@ def test_connect():
 @socketio.on('disconnect')
 def test_disconnect():
     print('Client disconnected')
-
-@app.route('/data')
-def data():
-    while True:
-        time.sleep(1)
-        socketio.emit('data', {'data': 'This is a data stream!'})
-
-
-# Handle join event
-@socketio.on('join')
-def handle_join():
-    sid = request.sid
-    global last_created_room
-    if len(waiting_players) == 0:
-        waiting_players.append(sid)
-        last_created_room = str(uuid.uuid4())
-
-        # register sid to the room
-        join_room(last_created_room)
-        room_of_players[sid] = last_created_room
-        emit('waiting', {'room_id' : last_created_room, 'sid' : sid}, to=last_created_room)
-    else:
-        host_sid = waiting_players.pop()
-        room_id = room_of_players[host_sid]
-        join_room(room_id)
-
-        sid = request.sid
-        room_of_players[sid] = room_id
-        
-        last_created_room = ""
-        print(room_of_players)
-        emit('matched', {'room_id' : room_id, 'sid' : sid}, to=room_id, broadcast=True)
-        emit('start-game', to=room_id)
-        
-
-# 소켓 테스트용 1초마다 시간 쏴주는 함수
-@app.route("/servertime")
-def servertime():
-    return render_template("servertime.html")
-
-
-@socketio.on('get_time')
-def get_time():
-    while True:
-        current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        socketio.emit('time', {'time': current_time})
-        socketio.sleep(1)
 
 @app.route('/snake')
 def snake():

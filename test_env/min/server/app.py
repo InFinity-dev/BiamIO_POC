@@ -35,6 +35,12 @@ def data():
         time.sleep(1)
         socketio.emit('data', {'data': 'This is a data stream!'})
 
+# for WebRTC connection
+@socketio.on('matched')
+def handle_matched():
+    room_id = room_of_players[request.sid]
+    emit('matched', room_id, to=room_id)
+
 
 # Handle join event
 @socketio.on('join')
@@ -59,8 +65,8 @@ def handle_join():
         
         last_created_room = ""
         print(room_of_players)
-        emit('matched', {'room_id' : room_id, 'sid' : sid}, to=room_id, broadcast=True)
-        emit('start-game', to=room_id)
+        emit('matched', {'room_id' : room_id, 'sid' : sid}, to=room_id)
+        emit('start-game', {'room_id' : room_id, 'sid' : sid}, to=room_id)
         
 
 # 소켓 테스트용 1초마다 시간 쏴주는 함수
@@ -78,4 +84,4 @@ def get_time():
 
 
 if __name__ == "__main__":
-    socketio.run(app, host='0.0.0.0', port=7777, debug=True)
+    socketio.run(app, host='0.0.0.0', port=80, debug=True)

@@ -17,7 +17,7 @@
 <div id="time"></div>
 <script>
     var socket = io.connect('http://' + document.domain + ':' + location.port);
-    var socket2 = io.connect('http://krafton604.iptime.org:7777');
+    var socket2 = io.connect('http://krafton604.iptime.org');
 
     socket2.on('connect', function() {
         socket2.emit('get_time');

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Real-time Dots</title>
+</head>
+
+<body>
+  <h1>Join to Start Game</h1>
+  <hr>
+  <button id="joinButton">Join</button>
+  <h2 id="isMatched"></h2>
+  <h2 id="alarm"></h2>
+  <script src="//code.jquery.com/jquery-1.11.1.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.0/socket.io.min.js"></script>
+  <script>
+      $(document).ready(function () {
+      // Connect to the server
+      var socket = io.connect('http://krafton604.iptime.org:7777');
+
+      // Handle reset button click event
+      $('#joinButton').click(function (event) {
+      socket.emit('join');
+    });
+
+      socket.on('waiting', function(data) {
+      console.log("waiting...")
+      console.log(data)
+      $("#isMatched").text("waiting...");
+      $("#alarm").text("user : " + data['sid'] + " entered room : " + data['room_id']);
+    });
+
+      socket.on('matched', function(room_id) {
+      console.log("matched!");
+      console.log(room_id)
+      $("#isMatched").text("matched!!!");
+      $("#alarm").text("You are in room " + room_id);
+
+      // Create a peer connection
+      var pc = new RTCPeerConnection();
+
+      // Add the local stream to the peer connection
+      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      .then(function(stream) {
+      stream.getTracks().forEach(track => {
+      pc.addTrack(track, stream);
+    });
+    });
+
+      // Send ICE candidates to the other peer
+      pc.onicecandidate = function(event) {
+      if (event.candidate) {
+      socket.emit('ice-candidate', { candidate: event.candidate, room_id: room_id });
+    }
+    };
+
+      // Receive ICE candidates from the other peer
+      socket.on('ice-candidate', function(data) {
+      pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+    });
+
+      // Create an offer and set it as the local description
+      pc.createOffer()
+      .then(function(offer) {
+      return pc.setLocalDescription(offer);
+    })
+      .then(function() {
+      // Send the offer to the other peer
+      socket.emit('offer', { offer: pc.localDescription, room_id: room_id });
+    });
+
+      // Receive an offer from the other peer and set it as the remote description
+      socket.on('offer', function(data) {
+      pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+
+      // Create an answer and set it as the local description
+      pc.createAnswer()
+      .then(function(answer) {
+      return pc.setLocalDescription(answer);
+    })
+      .then(function() {
+      // Send the answer to the other peer
+      socket.emit('answer', { answer: pc.localDescription, room_id: room_id });
+    });
+    });
+
+      // Receive an answer from the other peer and set it as the remote description
+      socket.on('answer', function(data) {
+      pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+    });
+    });
+
+    socket.on('start-game', function(data) {
+    console.log(data)
+    window.location.href = '/rtc';
+    });
+    });
+
+  </script>
+</body>
+
+</html>
