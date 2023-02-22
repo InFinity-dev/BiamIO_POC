@@ -39,28 +39,27 @@ def data():
 # Handle join event
 @socketio.on('join')
 def handle_join():
-    sid = request.sid
     global last_created_room
     if len(waiting_players) == 0:
-        waiting_players.append(sid)
+        waiting_players.append(request.sid)
         last_created_room = str(uuid.uuid4())
 
         # register sid to the room
         join_room(last_created_room)
-        room_of_players[sid] = last_created_room
-        emit('waiting', {'room_id' : last_created_room, 'sid' : sid}, to=last_created_room)
+        room_of_players[request.sid] = last_created_room
+        emit('waiting', {'room_id' : last_created_room, 'sid' : request.sid}, to=last_created_room)
     else:
         host_sid = waiting_players.pop()
         room_id = room_of_players[host_sid]
         join_room(room_id)
 
-        sid = request.sid
-        room_of_players[sid] = room_id
+        room_of_players[request.sid] = room_id
         
         last_created_room = ""
         print(room_of_players)
-        emit('matched', {'room_id' : room_id, 'sid' : sid}, to=room_id)
-        emit('start-game', {'room_id' : room_id, 'sid' : sid}, to=room_id)
+        emit('matched', {'room_id' : room_id, 'sid' : request.sid}, to=room_id)
+        emit('start-game', {'room_id' : room_id, 'sid' : request.sid}, to=request.sid)
+        emit('start-game', {'room_id' : room_id, 'sid' : host_sid}, to=host_sid)
         
 # Handle join event
 @socketio.on('send_data')
@@ -73,7 +72,7 @@ def send_data(data):
     sid = data['sid']
 
     print(head_x, head_y, score, room_id, sid)
-    emit('opp_data', {'opp_head_x' : head_x, 'opp_head_y' : head_y, 'opp_body_node' : body_node, 'opp_score' : score, 'opp_room_id' : room_id, 'opp_sid' : sid}, broadcast=True)
+    emit('opp_data', {'opp_head_x' : head_x, 'opp_head_y' : head_y, 'opp_body_node' : body_node, 'opp_score' : score, 'opp_room_id' : room_id, 'opp_sid' : sid}, broadcast=True, include_self=False)
 
 
 # 소켓 테스트용 1초마다 시간 쏴주는 함수
