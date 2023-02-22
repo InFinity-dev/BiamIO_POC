@@ -1,9 +1,12 @@
+from copyreg import pickle
 import datetime
 import time
 from flask import Flask, render_template, Response, request, redirect, url_for, session
 from flask_socketio import SocketIO, emit, join_room
 import uuid
 from engineio.payload import Payload
+from socket import *
+
 Payload.max_decode_packets = 200
 
 app = Flask(__name__)
@@ -11,6 +14,7 @@ app.config['SECRET_KEY'] = "roomfitisdead"
 
 socketio = SocketIO(app, cors_allowed_origins='*')
 
+#-----------------------------------------------------
 waiting_players = []
 room_of_players = {}
 players_in_room = {} 
@@ -63,7 +67,7 @@ def handle_join():
         
 # Handle join event
 @socketio.on('send_data')
-def send_data(data):
+def send_data(data):    
     head_x = data['head_x']
     head_y = data['head_y']
     body_node = data['body_node']
@@ -74,7 +78,6 @@ def send_data(data):
     print(head_x, head_y, score, room_id, sid)
     # emit('opp_data', {'opp_head_x' : head_x, 'opp_head_y' : head_y, 'opp_body_node' : body_node, 'opp_score' : score, 'opp_room_id' : room_id, 'opp_sid' : sid}, broadcast=True, include_self=False)
     emit('opp_data', {'opp_head_x' : head_x, 'opp_head_y' : head_y, 'opp_body_node' : body_node, 'opp_score' : score, 'opp_room_id' : room_id, 'opp_sid' : sid}, broadcast=True)
-
 
 # 소켓 테스트용 1초마다 시간 쏴주는 함수
 @app.route("/servertime")
