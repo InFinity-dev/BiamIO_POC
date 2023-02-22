@@ -14,16 +14,14 @@ app.config['SECRET_KEY'] = "roomfitisdead"
 
 socketio = SocketIO(app, cors_allowed_origins='*')
 
-#-----------------------------------------------------
 waiting_players = []
 room_of_players = {}
 players_in_room = {}
 last_created_room = ""
 
-# @app.route("/", methods=["GET", "POST"])
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("servertime.html")
 
 @socketio.on('connect')
 def test_connect():
@@ -33,14 +31,6 @@ def test_connect():
 def test_disconnect():
     print('Client disconnected')
 
-@app.route('/data')
-def data():
-    while True:
-        time.sleep(1)
-        socketio.emit('data', {'data': 'This is a data stream!'})
-
-
-# Handle join event
 @socketio.on('join')
 def handle_join():
     global last_created_room
@@ -48,7 +38,6 @@ def handle_join():
         waiting_players.append(request.sid)
         last_created_room = str(uuid.uuid4())
 
-        # register sid to the room
         join_room(last_created_room)
         room_of_players[request.sid] = last_created_room
         emit('waiting', {'room_id' : last_created_room, 'sid' : request.sid}, to=last_created_room)
@@ -65,7 +54,6 @@ def handle_join():
         emit('start-game', {'room_id' : room_id, 'sid' : request.sid}, to=request.sid)
         emit('start-game', {'room_id' : room_id, 'sid' : host_sid}, to=host_sid)
 
-# Handle join event
 @socketio.on('send_data')
 def send_data(data):
     head_x = data['head_x']
@@ -78,12 +66,6 @@ def send_data(data):
     print(head_x, head_y, score, room_id, sid)
     emit('opp_data', {'opp_head_x' : head_x, 'opp_head_y' : head_y, 'opp_body_node' : body_node, 'opp_score' : score, 'opp_room_id' : room_id, 'opp_sid' : sid}, broadcast=True, include_self=False)
     # emit('opp_data', {'opp_head_x' : head_x, 'opp_head_y' : head_y, 'opp_body_node' : body_node, 'opp_score' : score, 'opp_room_id' : room_id, 'opp_sid' : sid}, broadcast=True)
-
-# 소켓 테스트용 1초마다 시간 쏴주는 함수
-@app.route("/servertime")
-def servertime():
-    return render_template("servertime.html")
-
 
 @socketio.on('get_time')
 def get_time():
