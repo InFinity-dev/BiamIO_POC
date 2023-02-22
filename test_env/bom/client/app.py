@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 from cvzone.HandTrackingModule import HandDetector
 from flask import Flask, render_template, Response, request, redirect, url_for, session
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO, emit, join_room
 import os
 import ssl
 from distutils.util import strtobool
@@ -16,9 +16,8 @@ import aiohttp
 from aiohttp import web
 import jinja2
 import aiohttp_jinja2
-
+import uuid
 from engineio.payload import Payload
-
 Payload.max_decode_packets = 200
 
 app = Flask(__name__)
@@ -114,7 +113,7 @@ class SnakeGameClass:
                                     (rx - self.wFood // 2, ry - self.hFood // 2))
         return imgMain
     
-    def my_snake_update(self, HandPoints):
+    def my_snake_update(self, HandPoints, o_bodys):
         px, py = self.previousHead
         #----HandsPoint moving ----
         s_speed=30
@@ -181,9 +180,9 @@ class SnakeGameClass:
         socketio.emit('game_data', {'head_x': cx, 'head_y': cy, 'body_node': self.points, 'score': self.score})
 
         # ---- Collision ----
-        print(self.points[-1])
-        print(self.points[:-5])
-        if self.isCollision(self.points[-1], self.points[:-5]):
+        # print(self.points[-1])
+        # print(self.points[:-5])
+        if self.isCollision(self.points[-1], o_bodys[:-5]):
             print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Hit")
             self.gameOver = True
             self.points = []  # all points of the snake
@@ -193,7 +192,10 @@ class SnakeGameClass:
             self.previousHead = 0, 0  # previous head point
             self.randomFoodLocation()
 
-    def update(self, imgMain,  HandPoints=[]):
+    def update(self, imgMain, receive_Data, HandPoints=[]):
+        o_body_node=receive_Data["opp_body_node"]
+        o_score=receive_Data["opp_score"]
+        
         if self.gameOver:
             # pass
             cvzone.putTextRect(imgMain, "Game Over", [300, 400],
@@ -201,7 +203,11 @@ class SnakeGameClass:
             cvzone.putTextRect(imgMain, f'Your Score: {self.score}', [300, 550],
                                scale=7, thickness=5, offset=20)
         else:
-            self.my_snake_update(HandPoints)
+            # draw others snake
+            imgMain=self.draw_snakes(imgMain, o_body_node, o_score)
+            
+            # update and draw own snake
+            self.my_snake_update(HandPoints, o_body_node)
             imgMain=self.draw_Food(imgMain)
             imgMain=self.draw_snakes(imgMain, self.points, self.score)
 
@@ -209,43 +215,33 @@ class SnakeGameClass:
 
 game = SnakeGameClass("./static/food.png")
 
+fullData={}
 ######################################################################################
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    return render_template("snake.html")
+    return render_template("index.html")
 
+@app.route("/enter_snake", methods=["GET", "POST"])
+def enter_snake():
+    room_id = request.args.get('room_id')
+    sid = request.args.get('sid')
+    print(room_id, sid)
+    return render_template("snake.html", room_id = room_id, sid = sid)
 
 @socketio.on('connect')
 def test_connect():
     print('Client connected')
 
-
 @socketio.on('disconnect')
 def test_disconnect():
     print('Client disconnected')
 
-
-@app.route('/data')
-def data():
-    while True:
-        time.sleep(1)
-        socketio.emit('data', {'data': 'This is a data stream!'})
-
-
-# 소켓 테스트용 1초마다 시간 쏴주는 함수
-@app.route("/servertime")
-def servertime():
-    return render_template("servertime.html")
-
-
-@socketio.on('get_time')
-def get_time():
-    while True:
-        current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        socketio.emit('time', {'time': current_time})
-        socketio.sleep(1)
-
+@socketio.on('opp_data')
+def other_player_data(json_data):
+    global fullData
+    fullData=json_data
+    print('received message: ', str(json_data))
 
 @app.route('/snake')
 def snake():
@@ -256,18 +252,20 @@ def snake():
             hands, img = detector.findHands(img, flipType=False)
 
             pointIndex = []
-
+            
             if hands:
                 lmList = hands[0]['lmList']
                 pointIndex = lmList[8][0:2]
 
-            img = game.update(img, pointIndex)
+
+            img = game.update(img, pointIndex, fullData)
 
             # encode the image as a JPEG string
             _, img_encoded = cv2.imencode('.jpg', img)
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + img_encoded.tobytes() + b'\r\n')
-
+    
+    
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
