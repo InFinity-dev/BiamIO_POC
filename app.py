@@ -94,24 +94,26 @@ class SnakeGameClass:
 
     def draw_snakes(self, imgMain, points, score, isMe):
 
-        maincolor = (0, 0, 255)
+        maincolor = (0, 0, 255) # red
+        headcolor = (255, 0, 255) # magenta
 
         if isMe:
-            maincolor = (0, 255, 0)
+            maincolor = (0, 255, 0) # green
 
             # Draw Score
-            cvzone.putTextRect(imgMain, f'Score: {score}', [50, 80],
+            cvzone.putTextRect(imgMain, f'Score: {score}', [0, 40],
                                scale=3, thickness=3, offset=10)
 
         # Draw Snake
         if points:
+            cv2.circle(imgMain, points[-1][1], 20, headcolor, cv2.FILLED)
             cv2.circle(imgMain, points[-1][1], 15, maincolor, cv2.FILLED)
 
         pts = np.array(points, np.int32)
         if len(pts.shape) == 3:
             pts = pts[:, 1]
         pts = pts.reshape((-1, 1, 2))
-        cv2.polylines(imgMain, np.int32([pts]), False, maincolor, 7)
+        cv2.polylines(imgMain, np.int32([pts]), False, maincolor, 15)
 
         return imgMain
 
