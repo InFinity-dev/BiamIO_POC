@@ -5,6 +5,7 @@
     <title>SNAKE</title>
     <script src="//code.jquery.com/jquery-1.12.4.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.0/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   </head>
   <body>
     <h1>snake.html</h1>
@@ -87,11 +88,29 @@
       });
       server_socket.on("gameover_to_clients", function(data) {
         if (sid != data["sid"]) {
-          alert("You Win!");
+          Swal.fire({
+            title: 'You Win!',
+            text: 'Good Job!',
+            icon: 'success',
+            confirmButtonText: 'OK'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              window.location.href = '/'
+            }
+          });
         } else {
-          alert("You Lose!");
+          Swal.fire({
+            title: 'You Lose...',
+            text: 'try again!',
+            icon: 'error',
+            confirmButtonText: 'OK',
+            timer: 5000
+          }).then((result) => {
+            if (result.isConfirmed) {
+              window.location.href = '/'
+            }
+          });
         }
-        window.location.href = '/'
       })
     </script>
   </body>
