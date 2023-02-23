@@ -44,7 +44,7 @@ def room_disconnect(data):
 def gameover_to_server(data):
     sid = data['sid']
 
-    emit("gameover_to_clients", {'sid' : sid}, broadcast=True)
+    emit("gameover_to_clients", {'sid' : sid}, broadcast=True, include_self=False)
     print('gameover to clients')
 
 @socketio.on('join')
