@@ -2,13 +2,15 @@
 <html>
 
 <head>
-  <title>Real-time Dots</title>
+  <title>Biam.IO</title>
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
 
 <body>
-  <h1>Join to Start Game</h1>
-  <hr>
-  <button id="joinButton">Join</button>
+  <h1>Biam.IO</h1>
+  <img class="roomfit" src="static/dabcat.png" style="border-radius: 30px;width: 300px;height: 300px;" />
+  <p><br>RoomFit에 X를 눌러 조의를 표하세요</p>
+  <button id="joinButton">게임 입장</button>
   <h2 id="isMatched"></h2>
   <h2 id="alarm"></h2>
   <script src="//code.jquery.com/jquery-1.11.1.js"></script>
