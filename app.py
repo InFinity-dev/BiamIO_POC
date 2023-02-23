@@ -391,6 +391,9 @@ opponent_data = []
 gameover_flag = False
 ######################################################################################
 
+room_id = ""
+sid = ""
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     return render_template("index.html")
@@ -399,6 +402,9 @@ def index():
 @app.route("/enter_snake", methods=["GET", "POST"])
 def enter_snake():
     global game
+    global room_id
+    global sid
+
     room_id = request.args.get('room_id')
     sid = request.args.get('sid')
     print(room_id, sid)
@@ -409,12 +415,16 @@ def enter_snake():
 
 @socketio.on('connect')
 def test_connect():
-    print('Client connected')
+    print('Client connected!!!')
 
 
 @socketio.on('disconnect')
 def test_disconnect():
-    print('Client disconnected')
+    global room_id
+    global sid
+
+    socketio.emit('server_disconnect', {'room_id' : room_id, 'sid' : sid})
+    print('Client disconnected!!!')
 
 
 @socketio.on('opp_data_transfer')
