@@ -448,6 +448,7 @@ def snake():
         global opponent_data
         global game
         global gameover_flag
+        global sid
 
         while True:
             success, img = cap.read()
@@ -475,7 +476,7 @@ def snake():
                 print("game ended")
                 gameover_flag = False
                 time.sleep(1)
-                socketio.emit('gameover')
+                socketio.emit('gameover', {'sid' : sid})
                 time.sleep(2)
                 break
 
