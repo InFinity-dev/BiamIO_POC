@@ -32,12 +32,13 @@ def test_disconnect():
     print('Client disconnected')
 
 @socketio.on('server_disconnect')
-def test_disconnect(data):
+def room_disconnect(data):
     room_id = data['room_id']
+    print(f'room_id = {room_id}')
     sid = data['sid']
-
-    room_of_players = {k: v for k, v in room_of_players.items() if v != sid}
-    print('Client disconnected')
+    global room_of_players
+    room_of_players = {k: v for k, v in room_of_players.items() if v != room_id}
+    print('user left room')
 
 @socketio.on('join')
 def handle_join():
