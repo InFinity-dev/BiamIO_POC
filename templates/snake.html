@@ -82,6 +82,10 @@
       client_socket.on("gameover", function () {
         window.location.href = '/'
       });
+
+      client_socket.on("server_disconnect", function(data) {
+        server_socket.emit('server_disconnect', {'room_id' : data['room_id'], 'sid' : data['sid']})
+      })
     </script>
   </body>
 </html>
