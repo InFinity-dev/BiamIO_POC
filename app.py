@@ -359,10 +359,10 @@ class SnakeGameClass:
 
         if self.gameOver:
             # pass
-            cvzone.putTextRect(imgMain, "Game Over", [300, 400],
-                               scale=7, thickness=5, offset=20)
-            cvzone.putTextRect(imgMain, f'Your Score: {self.score}', [300, 550],
-                               scale=7, thickness=5, offset=20)
+            # cvzone.putTextRect(imgMain, "Game Over", [300, 400],
+            #                    scale=7, thickness=5, offset=20)
+            # cvzone.putTextRect(imgMain, f'Your Score: {self.score}', [300, 550],
+            #                    scale=7, thickness=5, offset=20)
             gameover_flag = True
         else:
             # draw others snake
