@@ -40,6 +40,13 @@ def room_disconnect(data):
     room_of_players = {k: v for k, v in room_of_players.items() if v != room_id}
     print('user left room')
 
+@socketio.on('gameover_to_server')
+def gameover_to_server(data):
+    sid = data['sid']
+
+    emit("gameover_to_clients", {'sid' : sid}, broadcast=True)
+    print('gameover to clients')
+
 @socketio.on('join')
 def handle_join():
     global last_created_room

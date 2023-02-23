@@ -78,13 +78,20 @@
           }
         }
       });
-
-      client_socket.on("gameover", function () {
-        window.location.href = '/'
-      });
-
       client_socket.on("server_disconnect", function(data) {
         server_socket.emit('server_disconnect', {'room_id' : data['room_id'], 'sid' : data['sid']})
+      })
+
+      client_socket.on("gameover", function (data) {
+        server_socket.emit('gameover_to_server', {'sid' : data['sid']})
+      });
+      server_socket.on("gameover_to_clients", function(data) {
+        if (sid != data["sid"]) {
+          alert("You Win!");
+        } else {
+          alert("You Lose!");
+        }
+        window.location.href = '/'
       })
     </script>
   </body>
