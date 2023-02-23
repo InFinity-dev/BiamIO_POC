@@ -94,9 +94,7 @@
             icon: 'success',
             confirmButtonText: 'OK'
           }).then((result) => {
-            if (result.isConfirmed) {
-              window.location.href = '/'
-            }
+            window.location.href = '/'
           });
         } else {
           Swal.fire({
@@ -106,9 +104,7 @@
             confirmButtonText: 'OK',
             timer: 5000
           }).then((result) => {
-            if (result.isConfirmed) {
-              window.location.href = '/'
-            }
+            window.location.href = '/'
           });
         }
       })
