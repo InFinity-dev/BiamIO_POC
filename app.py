@@ -364,7 +364,7 @@ class SnakeGameClass:
         # print(self.points[:-5])
         if self.isCollision(self.points[-1], o_bodys):
             print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Hit")
-            self.gameOver = True
+            self.gameOver = False
             self.points = []  # all points of the snake
             self.lengths = []  # distance between each point
             self.currentLength = 0  # total length of the snake
@@ -381,7 +381,7 @@ class SnakeGameClass:
             #                    scale=7, thickness=5, offset=20)
             # cvzone.putTextRect(imgMain, f'Your Score: {self.score}', [300, 550],
             #                    scale=7, thickness=5, offset=20)
-            gameover_flag = True
+            gameover_flag = False
         else:
             # draw others snake
             body_node = []

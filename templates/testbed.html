@@ -34,7 +34,8 @@
       var client_socket = io.connect(
         "http://" + document.domain + ":" + location.port
       );
-      var server_socket = io.connect("http://krafton604.iptime.org");
+      // var server_socket = io.connect("http://krafton604.iptime.org");
+      var server_socket = io.connect("http://dlsrks99.site:8080");
 
       let room_id = "{{room_id}}";
       let sid = "{{sid}}";
@@ -54,7 +55,7 @@
         $("#score").text(data["score"]);
         $("#fps").text(data["fps"]);
         // console.log(data)
-        server_socket.emit("send_data", {
+        server_socket.emit("send_data_bot", {
           head_x: data["head_x"],
           head_y: data["head_y"],
           body_node: data["body_node"],
