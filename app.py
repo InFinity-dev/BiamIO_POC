@@ -27,6 +27,7 @@ app.config['SECRET_KEY'] = "roomfitisdead"
 
 socketio = SocketIO(app, cors_allowed_origins='*')
 
+
 class HandDetector:
     """
     Finds Hands using the mediapipe library. Exports the landmarks
@@ -105,7 +106,7 @@ class HandDetector:
                 # [TODO] 조건문으로 가우시안 줄지말지 정하기
                 sigma = 10
                 img = (cv2.GaussianBlur(img, (0, 0), sigma))
-                    
+
                 ## draw
                 if draw:
                     self.mpDraw.draw_landmarks(img, handLms, self.mpHands.HAND_CONNECTIONS)
@@ -188,11 +189,11 @@ cap.set(cv2.CAP_PROP_FPS, 60)
 fps = cap.get(cv2.CAP_PROP_FPS)
 
 # color templates
-red = (0, 0, 255) # red
-megenta = (255, 0, 255) # magenta
-green = (0, 255, 0) # green
-yellow = (0, 255, 255) # yellow
-cyan = (255, 255, 0) # cyan
+red = (0, 0, 255)  # red
+megenta = (255, 0, 255)  # magenta
+green = (0, 255, 0)  # green
+yellow = (0, 255, 255)  # yellow
+cyan = (255, 255, 0)  # cyan
 detector = HandDetector(detectionCon=0.5, maxHands=1)
 
 
@@ -202,14 +203,14 @@ class SnakeGameClass:
         self.lengths = []  # distance between each point
         self.currentLength = 0  # total length of the snake
         self.allowedLength = 150  # total allowed Length
-        
-        #[TODO] 조건문으로 host,request에 대한 previeousHead, velocity 할당
+
+        # [TODO] 조건문으로 host,request에 대한 previeousHead, velocity 할당
         # start point: host=(0,360), request=(1280, 360)
         # self.previousHead = random.randint(100, 1000), random.randint(100, 600)
-        self.previousHead = (0, 360) 
+        self.previousHead = (0, 360)
 
         self.speed = 0.1
-        
+
         # self.velocityX ,self.velocityY : host= 1,0  request: -1,0
         # self.velocityX = random.choice([-1, 0, 1])
         # self.velocityY = random.choice([-1, 0, 1])
@@ -355,7 +356,8 @@ class SnakeGameClass:
             self.allowedLength += 50
             self.score += 1
 
-        socketio.emit('game_data', {'head_x': cx, 'head_y': cy, 'body_node': self.points, 'score': self.score, 'fps' : fps})
+        socketio.emit('game_data',
+                      {'head_x': cx, 'head_y': cy, 'body_node': self.points, 'score': self.score, 'fps': fps})
 
         # ---- Collision ----
         # print(self.points[-1])
@@ -384,7 +386,7 @@ class SnakeGameClass:
             # draw others snake
             body_node = []
             score = 0
-            
+
             if receive_Data:
                 if isBot:
                     body_node = receive_Data["bot_body_node"]
@@ -412,6 +414,7 @@ gameover_flag = False
 
 room_id = ""
 sid = ""
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -442,7 +445,7 @@ def test_disconnect():
     global room_id
     global sid
 
-    socketio.emit('server_disconnect', {'room_id' : room_id, 'sid' : sid})
+    socketio.emit('server_disconnect', {'room_id': room_id, 'sid': sid})
     print('Client disconnected!!!')
 
 
@@ -459,7 +462,8 @@ def opp_data_transfer(data):
     opponent_data = data['data']
     # socketio.emit('opp_data_to_test_server', {'data' : data}, broadcast=True)
     # print('Received data from client:', opp_head_x, opp_head_y, opp_score, opp_sid)
-        
+
+
 @app.route('/snake')
 def snake():
     def generate():
@@ -490,53 +494,55 @@ def snake():
                 print("game ended")
                 gameover_flag = False
                 time.sleep(1)
-                socketio.emit('gameover', {'sid' : sid})
+                socketio.emit('gameover', {'sid': sid})
                 time.sleep(2)
                 break
 
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
-#---- Testbed ----
+# ---- Testbed ----
 
-bot_data={'bot_head_x':300,
-          'bot_head_y':500,
-          'bot_body_node':[],
-          'currentLength':0,
-          'lengths':[],
-          'bot_velocityX':0,
-          'bot_velocityY':0}
-i=0
+bot_data = {'bot_head_x': 300,
+            'bot_head_y': 500,
+            'bot_body_node': [],
+            'currentLength': 0,
+            'lengths': [],
+            'bot_velocityX': 0,
+            'bot_velocityY': 0}
+i = 0
+
 
 def randomposition():
-    cx=random.randint(0, 1280)
-    cy=random.randint(0, 720)    
-    return(cx,cy)
+    cx = random.randint(0, 1280)
+    cy = random.randint(0, 720)
+    return (cx, cy)
+
 
 def bot_data_update():
-    global bot_data,i
-    
-    bot_speed=40
-    bot_velocityX=bot_data['bot_velocityX']
-    bot_velocityY=bot_data['bot_velocityY']
+    global bot_data, i
+
+    bot_speed = 40
+    bot_velocityX = bot_data['bot_velocityX']
+    bot_velocityY = bot_data['bot_velocityY']
     # 1초 마다 방향 바꾸기
-    if i==0:
-        bot_data['bot_velocityX']=random.choice([-1, 0, 1])
-        bot_data['bot_velocityY']=random.choice([-1, 0, 1])
-        i=30
-    
+    if i == 0:
+        bot_data['bot_velocityX'] = random.choice([-1, 0, 1])
+        bot_data['bot_velocityY'] = random.choice([-1, 0, 1])
+        i = 30
+
     px, py = bot_data['bot_head_x'], bot_data['bot_head_y']
     cx = round(px + bot_velocityX * bot_speed)
     cy = round(py + bot_velocityY * bot_speed)
-    
-    bot_data['bot_head_x']=cx
-    bot_data['bot_head_y']=cy
-    bot_data['bot_body_node'].append([[px,py],[cx,cy]])
-    
+
+    bot_data['bot_head_x'] = cx
+    bot_data['bot_head_y'] = cy
+    bot_data['bot_body_node'].append([[px, py], [cx, cy]])
+
     distance = math.hypot(cx - px, cy - py)
     bot_data['lengths'].append(distance)
     bot_data['currentLength'] += distance
-    
+
     if bot_data['currentLength'] > 250:
         for i, length in enumerate(bot_data['lengths']):
             bot_data['currentLength'] -= length
@@ -545,8 +551,9 @@ def bot_data_update():
 
             if bot_data['currentLength'] < 250:
                 break
-    i-=1
-    
+    i -= 1
+
+
 @app.route('/test_bed')
 def test_bed():
     def generate():
@@ -578,11 +585,12 @@ def test_bed():
                 print("game ended")
                 gameover_flag = False
                 time.sleep(1)
-                socketio.emit('gameover',  {'sid' : sid})
+                socketio.emit('gameover', {'sid': sid})
                 time.sleep(2)
                 break
 
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
 
 if __name__ == "__main__":
     socketio.run(app, host='localhost', port=5000, debug=True)
