@@ -1,3 +1,4 @@
+from ctypes import pydll
 import json
 import datetime
 import time
@@ -100,6 +101,11 @@ class HandDetector:
                     myHand["type"] = handType.classification[0].label
                 allHands.append(myHand)
 
+                # gaussian blur value
+                # [TODO] 조건문으로 가우시안 줄지말지 정하기
+                sigma = 10
+                img = (cv2.GaussianBlur(img, (0, 0), sigma))
+                    
                 ## draw
                 if draw:
                     self.mpDraw.draw_landmarks(img, handLms, self.mpHands.HAND_CONNECTIONS)
@@ -108,6 +114,9 @@ class HandDetector:
                     #               (255, 0, 255), 2)
                     cv2.putText(img, myHand["type"], (bbox[0] - 30, bbox[1] - 30), cv2.FONT_HERSHEY_PLAIN,
                                 2, (255, 0, 255), 2)
+        else:
+            sigma = 10
+            img = (cv2.GaussianBlur(img, (0, 0), sigma))
         if draw:
             return allHands, img
         else:
@@ -193,11 +202,18 @@ class SnakeGameClass:
         self.lengths = []  # distance between each point
         self.currentLength = 0  # total length of the snake
         self.allowedLength = 150  # total allowed Length
-        self.previousHead = random.randint(100, 1000), random.randint(100, 600)
+        
+        #[TODO] 조건문으로 host,request에 대한 previeousHead, velocity 할당
+        # start point: host=(0,360), request=(1280, 360)
+        # self.previousHead = random.randint(100, 1000), random.randint(100, 600)
+        self.previousHead = (0, 360) 
 
         self.speed = 0.1
-        self.velocityX = random.choice([-1, 0, 1])
-        self.velocityY = random.choice([-1, 0, 1])
+        
+        # self.velocityX ,self.velocityY : host= 1,0  request: -1,0
+        # self.velocityX = random.choice([-1, 0, 1])
+        # self.velocityY = random.choice([-1, 0, 1])
+        self.velocityX, self.velocityY = 1, 0
 
         self.imgFood = cv2.imread(pathFood, cv2.IMREAD_UNCHANGED)
         self.hFood, self.wFood, _ = self.imgFood.shape
@@ -354,7 +370,7 @@ class SnakeGameClass:
             self.previousHead = 0, 0  # previous head point
             self.randomFoodLocation()
 
-    def update(self, imgMain, receive_Data, HandPoints=[]):
+    def update(self, imgMain, receive_Data, HandPoints, isBot):
         global gameover_flag
 
         if self.gameOver:
@@ -366,18 +382,21 @@ class SnakeGameClass:
             gameover_flag = True
         else:
             # draw others snake
-            o_body_node = []
-            o_score = 0
-
+            body_node = []
+            score = 0
+            
             if receive_Data:
-                o_body_node = receive_Data["opp_body_node"]
-                o_score = receive_Data["opp_score"]
+                if isBot:
+                    body_node = receive_Data["bot_body_node"]
+                else:
+                    body_node = receive_Data["opp_body_node"]
+                    score = receive_Data["opp_score"]
 
             # 0 이면 상대 뱀
-            imgMain = self.draw_snakes(imgMain, o_body_node, o_score, 0)
+            imgMain = self.draw_snakes(imgMain, body_node, score, 0)
 
             # update and draw own snake
-            self.my_snake_update(HandPoints, o_body_node)
+            self.my_snake_update(HandPoints, body_node)
             imgMain = self.draw_Food(imgMain)
             # 1 이면 내 뱀
             imgMain = self.draw_snakes(imgMain, self.points, self.score, 1)
@@ -429,19 +448,18 @@ def test_disconnect():
 
 @socketio.on('opp_data_transfer')
 def opp_data_transfer(data):
-    opp_head_x = data['data']['opp_head_x']
-    opp_head_y = data['data']['opp_head_y']
-    opp_body_node = data['data']['opp_body_node']
-    opp_score = data['data']['opp_score']
-    opp_room_id = data['data']['opp_room_id']
-    opp_sid = data['data']['opp_sid']
+    # opp_head_x = data['data']['opp_head_x']
+    # opp_head_y = data['data']['opp_head_y']
+    # opp_body_node = data['data']['opp_body_node']
+    # opp_score = data['data']['opp_score']
+    # opp_room_id = data['data']['opp_room_id']
+    # opp_sid = data['data']['opp_sid']
 
     global opponent_data
     opponent_data = data['data']
     # socketio.emit('opp_data_to_test_server', {'data' : data}, broadcast=True)
     # print('Received data from client:', opp_head_x, opp_head_y, opp_score, opp_sid)
-
-
+        
 @app.route('/snake')
 def snake():
     def generate():
@@ -455,17 +473,13 @@ def snake():
             img = cv2.flip(img, 1)
             hands, img = detector.findHands(img, flipType=False)
 
-            # gaussian blur value
-            # sigma = 10
-            # img = (cv2.GaussianBlur(img, (0, 0), sigma))
-
             pointIndex = []
 
             if hands:
                 lmList = hands[0]['lmList']
                 pointIndex = lmList[8][0:2]
 
-            img = game.update(img, opponent_data, pointIndex)
+            img = game.update(img, opponent_data, pointIndex, False)
 
             # encode the image as a JPEG string
             _, img_encoded = cv2.imencode('.jpg', img)
@@ -482,6 +496,93 @@ def snake():
 
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
+
+#---- Testbed ----
+
+bot_data={'bot_head_x':300,
+          'bot_head_y':500,
+          'bot_body_node':[],
+          'currentLength':0,
+          'lengths':[],
+          'bot_velocityX':0,
+          'bot_velocityY':0}
+i=0
+
+def randomposition():
+    cx=random.randint(0, 1280)
+    cy=random.randint(0, 720)    
+    return(cx,cy)
+
+def bot_data_update():
+    global bot_data,i
+    
+    bot_speed=40
+    bot_velocityX=bot_data['bot_velocityX']
+    bot_velocityY=bot_data['bot_velocityY']
+    # 1초 마다 방향 바꾸기
+    if i==0:
+        bot_data['bot_velocityX']=random.choice([-1, 0, 1])
+        bot_data['bot_velocityY']=random.choice([-1, 0, 1])
+        i=30
+    
+    px, py = bot_data['bot_head_x'], bot_data['bot_head_y']
+    cx = round(px + bot_velocityX * bot_speed)
+    cy = round(py + bot_velocityY * bot_speed)
+    
+    bot_data['bot_head_x']=cx
+    bot_data['bot_head_y']=cy
+    bot_data['bot_body_node'].append([[px,py],[cx,cy]])
+    
+    distance = math.hypot(cx - px, cy - py)
+    bot_data['lengths'].append(distance)
+    bot_data['currentLength'] += distance
+    
+    if bot_data['currentLength'] > 250:
+        for i, length in enumerate(bot_data['lengths']):
+            bot_data['currentLength'] -= length
+            bot_data['lengths'] = bot_data['lengths'][1:]
+            bot_data['bot_body_node'] = bot_data['bot_body_node'][1:]
+
+            if bot_data['currentLength'] < 250:
+                break
+    i-=1
+    
+@app.route('/test_bed')
+def test_bed():
+    def generate():
+        global bot_data
+        global game
+        global gameover_flag
+        global sid
+
+        while True:
+            success, img = cap.read()
+            img = cv2.flip(img, 1)
+            hands, img = detector.findHands(img, flipType=False)
+
+            pointIndex = []
+
+            if hands:
+                lmList = hands[0]['lmList']
+                pointIndex = lmList[8][0:2]
+
+            bot_data_update()
+            img = game.update(img, bot_data, pointIndex, True)
+
+            # encode the image as a JPEG string
+            _, img_encoded = cv2.imencode('.jpg', img)
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + img_encoded.tobytes() + b'\r\n')
+
+            if gameover_flag:
+                print("game ended")
+                gameover_flag = False
+                time.sleep(1)
+                socketio.emit('gameover',  {'sid' : sid})
+                time.sleep(2)
+                break
+
+    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == "__main__":
     socketio.run(app, host='localhost', port=5000, debug=True)

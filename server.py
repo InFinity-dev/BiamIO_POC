@@ -83,6 +83,20 @@ def send_data(data):
     emit('opp_data', {'opp_head_x' : head_x, 'opp_head_y' : head_y, 'opp_body_node' : body_node, 'opp_score' : score, 'opp_room_id' : room_id, 'opp_sid' : sid}, broadcast=True, include_self=False)
     # emit('opp_data', {'opp_head_x' : head_x, 'opp_head_y' : head_y, 'opp_body_node' : body_node, 'opp_score' : score, 'opp_room_id' : room_id, 'opp_sid' : sid}, broadcast=True)
 
+@socketio.on('send_data')
+def send_data(data):
+    head_x = data['head_x']
+    head_y = data['head_y']
+    body_node = data['body_node']
+    score = data['score']
+    room_id = data['room_id']
+    sid = data['sid']
+
+    # print(head_x, head_y, score, room_id, sid)
+    emit('bot_data', {'bot_head_x' : head_x, 'bot_head_y' : head_y, 'bot_body_node' : body_node, 'bot_score' : score, 'bot_room_id' : room_id}, broadcast=True, include_self=False)
+    # emit('opp_data', {'opp_head_x' : head_x, 'opp_head_y' : head_y, 'opp_body_node' : body_node, 'opp_score' : score, 'opp_room_id' : room_id, 'opp_sid' : sid}, broadcast=True)
+
+
 @socketio.on('get_time')
 def get_time():
     while True:
