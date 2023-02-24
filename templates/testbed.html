@@ -24,12 +24,12 @@
     <div><a>head_y 좌표 : </a><a id="head_y"></a></div>
     <div><a>몸통 리스트 : </a><a id="body_node"></a></div>
     <div id="time"></div>
-    <div><a>상대 head_x 좌표 : </a><a id="opp_head_x"></a></div>
-    <div><a>상대 head_y 좌표 : </a><a id="opp_head_y"></a></div>
-    <div><a>상대 몸통 리스트 : </a><a id="opp_body_node"></a></div>
-    <div><a>상대 스코어 : </a><a id="opp_score"></a></div>
-    <div><a>상대 room_id : </a><a id="opp_room_id"></a></div>
-    <div><a>상대 sid : </a><a id="opp_sid"></a></div>
+    <div><a>상대 head_x 좌표 : </a><a id="bot_head_x"></a></div>
+    <div><a>상대 head_y 좌표 : </a><a id="bot_head_y"></a></div>
+    <div><a>상대 몸통 리스트 : </a><a id="bot_body_node"></a></div>
+    <div><a>상대 스코어 : </a><a id="bot_score"></a></div>
+    <div><a>상대 room_id : </a><a id="bot_room_id"></a></div>
+    <div><a>상대 sid : </a><a id="bot_sid"></a></div>
     <script>
       var client_socket = io.connect(
         "http://" + document.domain + ":" + location.port
@@ -63,24 +63,18 @@
           sid: sid,
         });
       });
-      server_socket.on("opp_data", function (data) {
+      server_socket.on("bot_data", function (data) {
         console.log(data);
+        $("#bot_head_x").text(data["bot_head_x"]);
+        $("#bot_head_y").text(data["bot_head_y"]);
+        $("#bot_body_node").text(data["bot_body_node"]);
+        $("#bot_score").text(data["bot_score"]);
+        $("#bot_room_id").text(data["bot_room_id"]);
 
-        if (sid != data["opp_sid"]) {
-          $("#opp_head_x").text(data["opp_head_x"]);
-          $("#opp_head_y").text(data["opp_head_y"]);
-          $("#opp_body_node").text(data["opp_body_node"]);
-          $("#opp_score").text(data["opp_score"]);
-          $("#opp_room_id").text(data["opp_room_id"]);
-          $("#opp_sid").text(data["opp_sid"]);
-
-          if (client_socket.connected) {
-            // console.log('Sending opp_data_transfer event to server');
-            client_socket.emit("opp_data_transfer", { data: data });
-            // console.log('Sent opp_data_transfer event to server');
-          } else {
-            console.log("socket not connected");
-          }
+        if (client_socket.connected) {
+          client_socket.emit("bot_data_transfer", { data: data });
+        } else {
+          console.log("socket not connected");
         }
       });
       client_socket.on("server_disconnect", function (data) {
