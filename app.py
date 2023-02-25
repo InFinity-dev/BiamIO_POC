@@ -210,8 +210,8 @@ class SnakeGameClass:
 
         # [TODO] 조건문으로 host,request에 대한 previeousHead, velocity 할당
         # start point: host=(0,360), request=(1280, 360)
-        # self.previousHead = random.randint(100, 1000), random.randint(100, 600)
-        self.previousHead = (5, 360)
+        self.previousHead = random.randint(100, 1000), random.randint(100, 600)
+        # self.previousHead = (5, 360)
 
         self.speed = 0.1
 

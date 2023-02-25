@@ -31,13 +31,14 @@ def test_connect():
 def test_disconnect():
     print('Client disconnected')
 
-@socketio.on('server_disconnect')
+@socketio.on('room_disconnect')
 def room_disconnect(data):
     room_id = data['room_id']
-    print(f'room_id = {room_id}')
     sid = data['sid']
+    print(f'room_id = {room_id} sid = {sid}')
     global room_of_players
     room_of_players = {k: v for k, v in room_of_players.items() if v != room_id}
+    print(room_of_players)
     print('user left room')
 
 @socketio.on('gameover_to_server')
