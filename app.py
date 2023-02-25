@@ -183,6 +183,10 @@ class HandDetector:
 
 ############################## SNAKE GAME LOGIC SECTION ##############################
 cap = cv2.VideoCapture(0)
+
+# Ubuntu YUYV cam setting low frame rate problem fixed
+cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
+
 cap.set(3, 1280)
 cap.set(4, 720)
 cap.set(cv2.CAP_PROP_FPS, 60)
