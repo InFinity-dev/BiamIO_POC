@@ -34,8 +34,8 @@
       var client_socket = io.connect(
         "http://" + document.domain + ":" + location.port
       );
-      // var server_socket = io.connect("http://krafton604.iptime.org");
-      var server_socket = io.connect("http://dlsrks99.site:8080");
+      var server_socket = io.connect("http://krafton604.iptime.org");
+      // var server_socket = io.connect("http://dlsrks99.site:8080");
 
       let room_id = "{{room_id}}";
       let sid = "{{sid}}";
@@ -91,6 +91,18 @@
           room_id: data["room_id"],
           sid: data["sid"],
         });
+      });
+
+      client_socket.on("foodEat", function (data) {
+        server_socket.emit("foodEat_to_server", { sid: data["foodEat"] });
+      });
+      server_socket.on("foodEat_to_clients", function (data) {
+        if (client_socket.connected) {
+          print(data);
+          client_socket.emit("foodEat_to_clients", { data: data });
+        } else {
+          console.log("socket not connected");
+        }
       });
 
       client_socket.on("gameover", function (data) {
