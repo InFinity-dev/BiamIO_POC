@@ -212,9 +212,9 @@ class SnakeGameClass:
     def __init__(self, pathFood, port_num, opp_ip, opp_port):
         # 통신 세팅
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.bind(('0.0.0.0', port_num))
+        self.sock.bind(('0.0.0.0', int(port_num)))
         self.sock.settimeout(0.02)
-        self.opp_addr = (opp_ip, opp_port)
+        self.opp_addr = (opp_ip, int(opp_port))
 
         self.points = []  # all points of the snake
         self.lengths = []  # distance between each point
@@ -496,8 +496,8 @@ class SnakeGameClass:
 
 room_id = ""
 sid = ""
-MY_PORT = 0
-game = SnakeGameClass("./static/food.png", MY_PORT, '0.0.0.0', 0)
+MY_PORT = int(0)
+game = SnakeGameClass("./static/food.png", MY_PORT, '0.0.0.0', int(0))
 
 @app.route("/", methods=["GET", "POST"])
 def index():
