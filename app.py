@@ -237,8 +237,8 @@ class SnakeGameClass:
         self.hFood, self.wFood, _ = self.imgFood.shape
         self.foodPoint = 0, 0
 
-        socketio.emit('foodEat', {'foodEat': True})
-        self.randomFoodLocation(True)
+        # socketio.emit('foodEat', {'foodEat': True})
+        # self.randomFoodLocation(True)
 
         self.score = 0
         self.gameOver = False
@@ -571,7 +571,12 @@ def snake():
         global sid
 
         time.sleep(1)
+
+        socketio.emit('foodEat', {'foodEat': True})
+        game.randomFoodLocation(True)
+
         print(f'inside generator before while loop')
+
         while True:
             success, img = cap.read()
             img = cv2.flip(img, 1)
