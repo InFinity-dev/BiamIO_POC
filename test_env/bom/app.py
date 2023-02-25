@@ -1,6 +1,3 @@
-
-
-
 from ctypes import pydll
 import json
 import datetime
@@ -186,6 +183,10 @@ class HandDetector:
 
 ############################## SNAKE GAME LOGIC SECTION ##############################
 cap = cv2.VideoCapture(0)
+
+# Ubuntu YUYV cam setting low frame rate problem fixed
+cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
+
 cap.set(3, 1280)
 cap.set(4, 720)
 cap.set(cv2.CAP_PROP_FPS, 60)
@@ -199,6 +200,9 @@ yellow = (0, 255, 255)  # yellow
 cyan = (255, 255, 0)  # cyan
 detector = HandDetector(detectionCon=0.5, maxHands=1)
 
+opponent_data = []
+food_data=[]
+gameover_flag = False
 
 class SnakeGameClass:
     def __init__(self, pathFood):
@@ -209,8 +213,8 @@ class SnakeGameClass:
 
         # [TODO] 조건문으로 host,request에 대한 previeousHead, velocity 할당
         # start point: host=(0,360), request=(1280, 360)
-        # self.previousHead = random.randint(100, 1000), random.randint(100, 600)
-        self.previousHead = (5, 360)
+        self.previousHead = random.randint(100, 1000), random.randint(100, 600)
+        # self.previousHead = (5, 360)
 
         self.speed = 0.1
 
@@ -222,18 +226,22 @@ class SnakeGameClass:
         self.imgFood = cv2.imread(pathFood, cv2.IMREAD_UNCHANGED)
         self.hFood, self.wFood, _ = self.imgFood.shape
         self.foodPoint = 0, 0
-        self.randomFoodLocation()
+        
+        socketio.emit('foodEat', {'foodEat': True})
+        self.randomFoodLocation(True)
 
         self.score = 0
         self.gameOver = False
 
     # ---collision function---
     def ccw(self, p, a, b):
+        # print("확인3")
         vect_sub_ap = [a[0] - p[0], a[1] - p[1]]
         vect_sub_bp = [b[0] - p[0], b[1] - p[1]]
         return vect_sub_ap[0] * vect_sub_bp[1] - vect_sub_ap[1] * vect_sub_bp[0]
 
     def segmentIntersects(self, p1_a, p1_b, p2_a, p2_b):
+        # print("확인2")
         ab = self.ccw(p1_a, p1_b, p2_a) * self.ccw(p1_a, p1_b, p2_b)
         cd = self.ccw(p2_a, p2_b, p1_a) * self.ccw(p2_a, p2_b, p1_b)
 
@@ -247,6 +255,7 @@ class SnakeGameClass:
         return ab <= 0 and cd <= 0
 
     def isCollision(self, u1_head_pt, u2_pts):
+        # print("확인1")
         if not u2_pts:
             return False
         p1_a, p1_b = u1_head_pt[0], u1_head_pt[1]
@@ -260,8 +269,14 @@ class SnakeGameClass:
 
     # ---collision function---end
 
-    def randomFoodLocation(self):
-        self.foodPoint = random.randint(100, 1000), random.randint(100, 600)
+    def randomFoodLocation(self, foodEat):
+        global food_data
+        
+        if food_data:
+            self.foodPoint=food_data
+        else:
+            if foodEat:
+                self.foodPoint = random.randint(100, 1000), random.randint(100, 600)
 
     def draw_snakes(self, imgMain, points, score, isMe):
 
@@ -322,7 +337,7 @@ class SnakeGameClass:
 
         else:
             self.speed = s_speed
-                
+
         cx = round(px + self.velocityX * self.speed)
         cy = round(py + self.velocityY * self.speed)
         # ----HandsPoint moving ----end
@@ -331,14 +346,13 @@ class SnakeGameClass:
             if cx>1280: cx=1280
             if cy<0: cy=0
             if cy>720: cy=720
-            
+
         if cx==0 or cx==1280:
             self.velocityX=-self.velocityX
         if cy== 0 or cy==720:
             self.velocityY=-self.velocityY
 
         # print(f'{cx} , {cy}')
-
         self.points.append([[px, py], [cx, cy]])
         # print(f'{self.points}')
 
@@ -349,6 +363,7 @@ class SnakeGameClass:
         self.previousHead = cx, cy
 
         # Length Reduction
+        # print(self.allowedLength)
         if self.currentLength > self.allowedLength:
             for i, length in enumerate(self.lengths):
                 self.currentLength -= length
@@ -360,20 +375,27 @@ class SnakeGameClass:
 
         # Check if snake ate the Food
         rx, ry = self.foodPoint
+        foodEat=False
         # print(f'먹이 위치 : {self.foodPoint}')
         if rx - self.wFood // 2 < cx < rx + self.wFood // 2 and \
                 ry - self.hFood // 2 < cy < ry + self.hFood // 2:
-            self.randomFoodLocation()
+            
+            foodEat=True
             self.allowedLength += 50
             self.score += 1
+        
+        print(foodEat)
+        socketio.emit('foodEat', {'foodEat': foodEat})
+        print(self.foodPoint)
+        self.randomFoodLocation(foodEat)
 
         socketio.emit('game_data',
                       {'head_x': cx, 'head_y': cy, 'body_node': self.points, 'score': self.score, 'fps': fps})
 
         # ---- Collision ----
         # print(self.points[-1])
-        # print(self.points[:-5])
-        if self.isCollision(self.points[-1], o_bodys):
+        
+        if self.points and self.isCollision(self.points[-1], o_bodys):
             print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Hit")
             self.gameOver = False
             self.points = []  # all points of the snake
@@ -381,7 +403,7 @@ class SnakeGameClass:
             self.currentLength = 0  # total length of the snake
             self.allowedLength = 150  # total allowed Length
             self.previousHead = 0, 0  # previous head point
-            self.randomFoodLocation()
+            # self.randomFoodLocation()
 
     def update(self, imgMain, receive_Data, HandPoints, isBot):
         global gameover_flag
@@ -418,9 +440,6 @@ class SnakeGameClass:
 
 
 game = SnakeGameClass("./static/food.png")
-
-opponent_data = []
-gameover_flag = False
 ######################################################################################
 
 room_id = ""
@@ -462,18 +481,13 @@ def test_disconnect():
 
 @socketio.on('opp_data_transfer')
 def opp_data_transfer(data):
-    # opp_head_x = data['data']['opp_head_x']
-    # opp_head_y = data['data']['opp_head_y']
-    # opp_body_node = data['data']['opp_body_node']
-    # opp_score = data['data']['opp_score']
-    # opp_room_id = data['data']['opp_room_id']
-    # opp_sid = data['data']['opp_sid']
-
     global opponent_data
     opponent_data = data['data']
-    # socketio.emit('opp_data_to_test_server', {'data' : data}, broadcast=True)
-    # print('Received data from client:', opp_head_x, opp_head_y, opp_score, opp_sid)
 
+@socketio.on('foodEat_to_clients')
+def opp_data_transfer(data):
+    global food_data
+    food_data = data['data']['foodPoint']
 
 @app.route('/snake')
 def snake():
@@ -523,25 +537,18 @@ bot_data = {'bot_head_x': 300,
             'bot_velocityY': random.choice([-1, 1])}
 bot_cnt = 0
 
-
-def randomposition():
-    cx = random.randint(0, 1280)
-    cy = random.randint(0, 720)
-    return (cx, cy)
-
-
 def bot_data_update():
     global bot_data, bot_cnt
 
     bot_speed=20
     px, py = bot_data['bot_head_x'], bot_data['bot_head_y']
-    
+
     if px<=0 or px>=1280 or py<= 0 or py>=720:
         if px<0: px=0
         if px>1280: px=1280
         if py<0: py=0
         if py>720: py=720
-        
+
         if px==0 or px==1280:
             bot_data['bot_velocityX']=-bot_data['bot_velocityX']
         if py== 0 or py==720:
@@ -549,16 +556,19 @@ def bot_data_update():
 
 
     # 1초 마다 방향 바꾸기
-    print(bot_cnt)
+    # print(bot_cnt)
     if bot_cnt==30:
         bot_data['bot_velocityX']=random.choice([-1,0,1])
-        bot_data['bot_velocityY']=random.choice([-1,0,1])
+        if bot_data['bot_velocityX']==0:
+            bot_data['bot_velocityY']=random.choice([-1,1])
+        else:
+            bot_data['bot_velocityY']=random.choice([-1,0,1])
         bot_cnt=0
     bot_cnt += 1
-        
+
     bot_velocityX=bot_data['bot_velocityX']
     bot_velocityY=bot_data['bot_velocityY']
-        
+
     cx = round(px + bot_velocityX * bot_speed)
     cy = round(py + bot_velocityY * bot_speed)
 
@@ -578,8 +588,6 @@ def bot_data_update():
 
             if bot_data['currentLength'] < 250:
                 break
-    
-
 
 @app.route('/test_bed')
 def test_bed():
@@ -622,4 +630,3 @@ def test_bed():
 
 if __name__ == "__main__":
     socketio.run(app, host='localhost', port=5000, debug=True)
-
