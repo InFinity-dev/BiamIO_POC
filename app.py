@@ -572,7 +572,7 @@ def snake():
         global gameover_flag
         global sid
 
-        time.sleep(1)
+        # time.sleep(1)
 
         socketio.emit('foodEat', {'foodEat': True})
         game.randomFoodLocation(True)
