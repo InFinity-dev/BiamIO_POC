@@ -589,7 +589,7 @@ def test_bed():
         global game
         global gameover_flag
         global sid
-        
+
         while True:
             success, img = cap.read()
             img = cv2.flip(img, 1)
