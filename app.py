@@ -206,7 +206,7 @@ class SnakeGameClass:
         #[TODO] 조건문으로 host,request에 대한 previeousHead, velocity 할당
         # start point: host=(0,360), request=(1280, 360)
         # self.previousHead = random.randint(100, 1000), random.randint(100, 600)
-        self.previousHead = (0, 360) 
+        self.previousHead = (1, 360) 
 
         self.speed = 0.1
         
@@ -250,11 +250,12 @@ class SnakeGameClass:
         for u2_pt in u2_pts:
             p2_a, p2_b = u2_pt[0], u2_pt[1]
             if self.segmentIntersects(p1_a, p1_b, p2_a, p2_b):
-                print(u2_pt)
+                # print(u2_pt)
                 return True
         return False
 
     # ---collision function---end
+            
 
     def randomFoodLocation(self):
         self.foodPoint = random.randint(100, 1000), random.randint(100, 600)
@@ -295,35 +296,45 @@ class SnakeGameClass:
         px, py = self.previousHead
         # ----HandsPoint moving ----
         s_speed = 30
-        if HandPoints:
-            m_x, m_y = HandPoints
-            dx = m_x - px  # -1~1
-            dy = m_y - py
-
-            # speed 범위: 0~1460
-            if math.hypot(dx, dy) > math.hypot(1280, 720) / 10:
-                self.speed = math.hypot(1280, 720) / 10  # 146
-            elif math.hypot(dx, dy) < s_speed:
-                self.speed = s_speed
-            else:
-                self.speed = math.hypot(dx, dy)
-
-            if dx != 0:
-                self.velocityX = dx / 1280
-            if dy != 0:
-                self.velocityY = dy / 720
-
-            # print(self.velocityX)
-            # print(self.velocityY)
-
-            cx = round(px + self.velocityX * self.speed)
-            cy = round(py + self.velocityY * self.speed)
-
+        
+        if px<=0 or px>=1280 or py<= 0 or py>=720:
+            if px<0: px=0
+            if px>1280: px=1280
+            if py<0: py=0
+            if py>720: py=720
+            
+            if px==0 or px==1280:
+                self.velocityX=-self.velocityX
+            if py== 0 or py==720:
+                self.velocityY=-self.velocityY
         else:
-            self.speed = s_speed
-            cx = round(px + self.velocityX * self.speed)
-            cy = round(py + self.velocityY * self.speed)
-        # ----HandsPoint moving ----end
+            if HandPoints:
+                m_x, m_y = HandPoints
+                dx = m_x - px  # -1~1
+                dy = m_y - py
+
+                # speed 범위: 0~1460
+                if math.hypot(dx, dy) > math.hypot(1280, 720) / 10:
+                    self.speed = math.hypot(1280, 720) / 10  # 146
+                elif math.hypot(dx, dy) < s_speed:
+                    self.speed = s_speed
+                else:
+                    self.speed = math.hypot(dx, dy)
+
+                if dx != 0:
+                    self.velocityX = dx / 1280
+                if dy != 0:
+                    self.velocityY = dy / 720
+
+                # print(self.velocityX)
+                # print(self.velocityY)
+
+            else:
+                self.speed = s_speed
+                
+        cx = round(px + self.velocityX * self.speed)
+        cy = round(py + self.velocityY * self.speed)
+            # ----HandsPoint moving ----end
 
         # print(f'{cx} , {cy}')
 
@@ -396,6 +407,8 @@ class SnakeGameClass:
             imgMain = self.draw_snakes(imgMain, body_node, score, 0)
 
             # update and draw own snake
+            print(self.points)
+            print(body_node)
             self.my_snake_update(HandPoints, body_node)
             imgMain = self.draw_Food(imgMain)
             # 1 이면 내 뱀
@@ -499,8 +512,8 @@ def snake():
 
 #---- Testbed ----
 
-bot_data={'bot_head_x':300,
-          'bot_head_y':500,
+bot_data={'bot_head_x':1200,
+          'bot_head_y':350,
           'bot_body_node':[],
           'currentLength':0,
           'lengths':[],
@@ -516,16 +529,29 @@ def randomposition():
 def bot_data_update():
     global bot_data,i
     
-    bot_speed=40
+    bot_speed=30
+    px, py = bot_data['bot_head_x'], bot_data['bot_head_y']
+    
+    if px<=0 or px>=1280 or py<= 0 or py>=720:
+        if px<0: px=0
+        if px>1280: px=1280
+        if py<0: py=0
+        if py>720: py=720
+        
+        if px==0 or px==1280:
+            bot_data['bot_velocityX']=-bot_data['bot_velocityX']
+        if py== 0 or py==720:
+            bot_data['bot_velocityY']=-bot_data['bot_velocityY']
+
+    else:
+        # 1초 마다 방향 바꾸기
+        if i==0:
+            bot_data['bot_velocityX']=random.choice([-1, 0, 1])
+            bot_data['bot_velocityY']=random.choice([-1, 0, 1])
+            i=30
     bot_velocityX=bot_data['bot_velocityX']
     bot_velocityY=bot_data['bot_velocityY']
-    # 1초 마다 방향 바꾸기
-    if i==0:
-        bot_data['bot_velocityX']=random.choice([-1, 0, 1])
-        bot_data['bot_velocityY']=random.choice([-1, 0, 1])
-        i=30
-    
-    px, py = bot_data['bot_head_x'], bot_data['bot_head_y']
+        
     cx = round(px + bot_velocityX * bot_speed)
     cy = round(py + bot_velocityY * bot_speed)
     
