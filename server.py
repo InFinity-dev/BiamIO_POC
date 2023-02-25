@@ -1,6 +1,6 @@
 from copyreg import pickle
 import datetime
-import time
+import time, random
 from flask import Flask, render_template, Response, request, redirect, url_for, session
 from flask_socketio import SocketIO, emit, join_room
 import uuid
@@ -47,6 +47,14 @@ def gameover_to_server(data):
 
     emit("gameover_to_clients", {'sid' : sid}, broadcast=True, include_self=False)
     print('gameover to clients')
+
+@socketio.on('foodEat_to_server')
+def foodEat_to_server(data):
+    foodPoint=[]
+    if data['foodEat']:
+        foodPoint=random.randint(100, 1000), random.randint(100, 600)
+        emit("foodEat_to_clients", {'foodPoint' : foodPoint}, broadcast=True, include_self=False)
+    print('reposition food')
 
 @socketio.on('join')
 def handle_join():
