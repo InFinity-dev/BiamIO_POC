@@ -116,7 +116,7 @@
   });
   server_socket.on("foodEat_to_clients", function (data) {
     if (client_socket.connected) {
-      print(data);
+      // print(data); 한봄이는 브라우져한테 출력을 시켜요
       client_socket.emit("foodEat_to_clients", { data: data });
     } else {
       console.log("socket not connected");
