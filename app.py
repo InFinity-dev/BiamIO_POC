@@ -19,6 +19,7 @@ import jinja2
 import aiohttp_jinja2
 import uuid
 from engineio.payload import Payload
+import socket
 
 Payload.max_decode_packets = 200
 
@@ -27,6 +28,8 @@ app.config['SECRET_KEY'] = "roomfitisdead"
 
 socketio = SocketIO(app, cors_allowed_origins='*')
 
+# True -> udp 통신, false -> 서버 통신
+use_udp = True
 
 class HandDetector:
     """
@@ -200,12 +203,13 @@ yellow = (0, 255, 255)  # yellow
 cyan = (255, 255, 0)  # cyan
 detector = HandDetector(detectionCon=0.5, maxHands=1)
 
-opponent_data = []
+# UDP 전송 위해 딕셔너리로 자료형 변환함. 문제 발생시 참조
+opponent_data = {}
 food_data=[]
 gameover_flag = False
 
 class SnakeGameClass:
-    def __init__(self, pathFood):
+    def __init__(self, pathFood, port_num, opp_ip, opp_port):
         self.points = []  # all points of the snake
         self.lengths = []  # distance between each point
         self.currentLength = 0  # total length of the snake
@@ -233,7 +237,13 @@ class SnakeGameClass:
         self.score = 0
         self.gameOver = False
 
-    # ---collision function---
+        # 통신 세팅
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.bind(('0.0.0.0', port_num))
+        self.sock.settimeout(0.02)
+        self.opp_addr = (opp_ip, opp_port)
+
+        # ---collision function---
     def ccw(self, p, a, b):
         # print("확인3")
         vect_sub_ap = [a[0] - p[0], a[1] - p[1]]
@@ -390,8 +400,11 @@ class SnakeGameClass:
         print(self.foodPoint)
         self.randomFoodLocation(foodEat)
 
-        socketio.emit('game_data',
-                      {'head_x': cx, 'head_y': cy, 'body_node': self.points, 'score': self.score, 'fps': fps})
+        if use_udp:
+            self.send_data(cx, cy)
+        else :
+            socketio.emit('game_data',
+                          {'head_x': cx, 'head_y': cy, 'body_node': self.points, 'score': self.score, 'fps': fps})
 
         # ---- Collision ----
         # print(self.points[-1])
@@ -439,13 +452,50 @@ class SnakeGameClass:
 
         return imgMain
 
+    def send_data(self, cx, cy):
+        global opponent_data
+        data_set = str(cx) + '/' + str(cy) + '/' + str(self.points) + '/' + str(self.score)
+        self.sock.sendto(data_set.encode(), self.opp_addr)
 
-game = SnakeGameClass("./static/food.png")
+        try:
+            data, _ = self.sock.recvfrom(10000)
+            decode_data = data.decode()
+            if decode_data == 'A' :
+                pass
+            else:
+                decode_data_list = decode_data.split('/')
+                opponent_data['opp_head_x'] = int(decode_data_list[0])
+                opponent_data['opp_head_y'] = int(decode_data_list[1])
+                opponent_data['opp_body_node'] = eval(decode_data_list[2])
+                opponent_data['opp_score'] = int(decode_data_list[3])
+        except socket.timeout:
+            pass
+
+    def test_connect(self):
+        global use_udp
+        a = 0
+
+        for i in range(10) :
+            test_code = 'A'
+            self.sock.sendto(test_code.encode(), self.opp_addr)
+            try:
+                data, result = self.sock.recvfrom(100)
+            except socket.timeout:
+                a += 1
+
+        if a == 0 :
+            use_udp = False
+
+    def __del__(self):
+        global use_udp
+        use_udp = True
+        self.sock.close()
 ######################################################################################
 
 room_id = ""
 sid = ""
-
+MY_PORT = 0
+game = SnakeGameClass("./static/food.png", MY_PORT, '0.0.0.0', 0)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -462,7 +512,6 @@ def enter_snake():
     sid = request.args.get('sid')
     print(room_id, sid)
 
-    game = SnakeGameClass("./static/food.png")
     return render_template("snake.html", room_id=room_id, sid=sid)
 
 
@@ -479,6 +528,24 @@ def test_disconnect():
     socketio.emit('server_disconnect', {'room_id': room_id, 'sid': sid})
     print('Client disconnected!!!')
 
+# webpage로 부터 받은 내 port
+@socketio.on('my_port')
+def my_port(data):
+    global MY_PORT
+
+    MY_PORT = data['my_port']
+
+# webpage로 부터 받은 상대방 주소 (socket 통신에 사용)
+@socketio.on('opponent_address')
+def set_address(data):
+    global MY_PORT
+    global game
+    opp_ip = data['ip_addr']
+    opp_port = data['port']
+
+    game = SnakeGameClass("./static/food.png", MY_PORT, opp_ip, opp_port)
+    game.test_connect()
+    socketio.emit('connection_result')
 
 @socketio.on('opp_data_transfer')
 def opp_data_transfer(data):
@@ -499,6 +566,8 @@ def snake():
         global game
         global gameover_flag
         global sid
+
+        time.sleep(1)
 
         while True:
             success, img = cap.read()
