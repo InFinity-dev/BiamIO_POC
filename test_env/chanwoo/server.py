@@ -59,6 +59,7 @@ def handle_join():
     if len(waiting_players) == 0:
         waiting_players.append(request.sid)
         last_created_room = str(uuid.uuid4())
+
         join_room(last_created_room)
         room_of_players[request.sid] = last_created_room
         emit('waiting', {'room_id' : last_created_room, 'sid' : request.sid}, to=last_created_room)
@@ -66,6 +67,7 @@ def handle_join():
         host_sid = waiting_players.pop()
         room_id = room_of_players[host_sid]
         join_room(room_id)
+
         room_of_players[request.sid] = room_id
         players_in_room[room_id] = 0
 
@@ -85,8 +87,23 @@ def send_data(data):
     sid = data['sid']
 
     # print(head_x, head_y, score, room_id, sid)
+    # print(f'head_x, head_y, score, room_id, sid')
     emit('opp_data', {'opp_head_x' : head_x, 'opp_head_y' : head_y, 'opp_body_node' : body_node, 'opp_score' : score, 'opp_room_id' : room_id, 'opp_sid' : sid}, broadcast=True, include_self=False)
     # emit('opp_data', {'opp_head_x' : head_x, 'opp_head_y' : head_y, 'opp_body_node' : body_node, 'opp_score' : score, 'opp_room_id' : room_id, 'opp_sid' : sid}, broadcast=True)
+
+@socketio.on('send_data_bot')
+def send_data_bot(data):
+    head_x = data['head_x']
+    head_y = data['head_y']
+    body_node = data['body_node']
+    score = data['score']
+    room_id = data['room_id']
+    sid = data['sid']
+
+    # print(head_x, head_y, score, room_id, sid)
+    emit('bot_data', {'bot_head_x' : head_x, 'bot_head_y' : head_y, 'bot_body_node' : body_node, 'bot_score' : score, 'bot_room_id' : room_id}, broadcast=True, include_self=False)
+    # emit('opp_data', {'opp_head_x' : head_x, 'opp_head_y' : head_y, 'opp_body_node' : body_node, 'opp_score' : score, 'opp_room_id' : room_id, 'opp_sid' : sid}, broadcast=True)
+
 
 @socketio.on('get_time')
 def get_time():
@@ -116,5 +133,6 @@ def my_port(data):
     else:
         address[room_id] = [ip_addr, port]
 
+
 if __name__ == "__main__":
-    socketio.run(app, host='0.0.0.0', port=8080)
+    socketio.run(app, host='0.0.0.0', port=8080, debug=True)
