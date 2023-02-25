@@ -210,6 +210,12 @@ gameover_flag = False
 
 class SnakeGameClass:
     def __init__(self, pathFood, port_num, opp_ip, opp_port):
+        # 통신 세팅
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.bind(('0.0.0.0', port_num))
+        self.sock.settimeout(0.02)
+        self.opp_addr = (opp_ip, opp_port)
+
         self.points = []  # all points of the snake
         self.lengths = []  # distance between each point
         self.currentLength = 0  # total length of the snake
@@ -236,12 +242,6 @@ class SnakeGameClass:
 
         self.score = 0
         self.gameOver = False
-
-        # 통신 세팅
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.bind(('0.0.0.0', port_num))
-        self.sock.settimeout(0.02)
-        self.opp_addr = (opp_ip, opp_port)
 
         # ---collision function---
     def ccw(self, p, a, b):
@@ -386,6 +386,7 @@ class SnakeGameClass:
 
         # Check if snake ate the Food
         rx, ry = self.foodPoint
+        print(f'foodPoint in my_snake_update func = {rx,ry}')
         foodEat=False
         # print(f'먹이 위치 : {self.foodPoint}')
         if rx - self.wFood // 2 < cx < rx + self.wFood // 2 and \
@@ -445,6 +446,7 @@ class SnakeGameClass:
             imgMain = self.draw_snakes(imgMain, body_node, score, 0)
 
             # update and draw own snake
+            print(f'trying to call my_snake_update function : self.foodPoint-> {self.foodPoint}')
             self.my_snake_update(HandPoints, body_node)
             imgMain = self.draw_Food(imgMain)
             # 1 이면 내 뱀
@@ -569,7 +571,7 @@ def snake():
         global sid
 
         time.sleep(1)
-
+        print(f'inside generator before while loop')
         while True:
             success, img = cap.read()
             img = cv2.flip(img, 1)
