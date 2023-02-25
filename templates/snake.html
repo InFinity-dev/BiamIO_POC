@@ -117,6 +117,8 @@
   server_socket.on("foodPoint_from_server", function (data) {
     if (client_socket.connected) {
       // print(data); 한봄이는 브라우져한테 출력을 시켜요
+      console.log("foodPoint_from_server !!!!");
+      console.log(data);
       client_socket.emit("foodPoint_to_flask", { foodPoint: data["foodPoint"] });
     } else {
       console.log("socket not connected");

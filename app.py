@@ -555,7 +555,7 @@ def opp_data_transfer(data):
     # print('Received data from client:', opp_head_x, opp_head_y, opp_score, opp_sid)
 
 @socketio.on('foodPoint_to_flask')
-def opp_data_transfer(data):
+def foodPoint_to_flask(data):
     global food_data
     food_data = data['foodPoint']
     print(f'food_data get from server : {food_data}')

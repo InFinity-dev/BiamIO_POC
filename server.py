@@ -56,6 +56,7 @@ def gameover_to_server(data):
 @socketio.on('foodEat_to_server')
 def foodEat_to_server(data):
     foodPoint=[]
+    print(f'foodEat_to_server Function Called!!!')
     if data['foodEat']:
         foodPoint=random.randint(100, 1000), random.randint(100, 600)
         emit("foodPoint_from_server", {'foodPoint' : foodPoint}, broadcast=True, include_self=False)
