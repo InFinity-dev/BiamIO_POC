@@ -112,7 +112,7 @@
   });
 
   client_socket.on("foodEat", function (data) {
-    server_socket.emit("foodEat_to_server", { sid: data["foodEat"] });
+    server_socket.emit("foodEat_to_server", { foodEat: data["foodEat"] });
   });
   server_socket.on("foodEat_to_clients", function (data) {
     if (client_socket.connected) {
