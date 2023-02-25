@@ -114,10 +114,10 @@
   client_socket.on("foodEat", function (data) {
     server_socket.emit("foodEat_to_server", { foodEat: data["foodEat"] });
   });
-  server_socket.on("foodEat_to_clients", function (data) {
+  server_socket.on("foodPoint_from_server", function (data) {
     if (client_socket.connected) {
       // print(data); 한봄이는 브라우져한테 출력을 시켜요
-      client_socket.emit("foodEat_to_clients", { data: data });
+      client_socket.emit("foodPoint_to_flask", { foodPoint: data["foodPoint"] });
     } else {
       console.log("socket not connected");
     }

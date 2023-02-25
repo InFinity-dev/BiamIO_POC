@@ -58,7 +58,7 @@ def foodEat_to_server(data):
     foodPoint=[]
     if data['foodEat']:
         foodPoint=random.randint(100, 1000), random.randint(100, 600)
-        emit("foodEat_to_clients", {'foodPoint' : foodPoint}, broadcast=True, include_self=False)
+        emit("foodPoint_from_server", {'foodPoint' : foodPoint}, broadcast=True, include_self=False)
     print('reposition food')
 
 @socketio.on('join')
