@@ -206,7 +206,7 @@ class SnakeGameClass:
         self.points = []  # all points of the snake
         self.lengths = []  # distance between each point
         self.currentLength = 0  # total length of the snake
-        self.allowedLength = 150  # total allowed Length
+        self.allowedLength = 1  # total allowed Length
 
         # [TODO] 조건문으로 host,request에 대한 previeousHead, velocity 할당
         # start point: host=(0,360), request=(1280, 360)
@@ -230,11 +230,13 @@ class SnakeGameClass:
 
     # ---collision function---
     def ccw(self, p, a, b):
+        print("확인3")
         vect_sub_ap = [a[0] - p[0], a[1] - p[1]]
         vect_sub_bp = [b[0] - p[0], b[1] - p[1]]
         return vect_sub_ap[0] * vect_sub_bp[1] - vect_sub_ap[1] * vect_sub_bp[0]
 
     def segmentIntersects(self, p1_a, p1_b, p2_a, p2_b):
+        print("확인2")
         ab = self.ccw(p1_a, p1_b, p2_a) * self.ccw(p1_a, p1_b, p2_b)
         cd = self.ccw(p2_a, p2_b, p1_a) * self.ccw(p2_a, p2_b, p1_b)
 
@@ -248,6 +250,7 @@ class SnakeGameClass:
         return ab <= 0 and cd <= 0
 
     def isCollision(self, u1_head_pt, u2_pts):
+        print("확인1")
         if not u2_pts:
             return False
         p1_a, p1_b = u1_head_pt[0], u1_head_pt[1]
@@ -339,7 +342,6 @@ class SnakeGameClass:
             self.velocityY=-self.velocityY
 
         # print(f'{cx} , {cy}')
-
         self.points.append([[px, py], [cx, cy]])
         # print(f'{self.points}')
 
@@ -350,6 +352,7 @@ class SnakeGameClass:
         self.previousHead = cx, cy
 
         # Length Reduction
+        print(self.allowedLength)
         if self.currentLength > self.allowedLength:
             for i, length in enumerate(self.lengths):
                 self.currentLength -= length
@@ -372,15 +375,14 @@ class SnakeGameClass:
                       {'head_x': cx, 'head_y': cy, 'body_node': self.points, 'score': self.score, 'fps': fps})
 
         # ---- Collision ----
-        # print(self.points[-1])
-        # print(self.points[:-5])
+        print(self.points[-1])
         if self.isCollision(self.points[-1], o_bodys):
             print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Hit")
             self.gameOver = False
             self.points = []  # all points of the snake
             self.lengths = []  # distance between each point
             self.currentLength = 0  # total length of the snake
-            self.allowedLength = 150  # total allowed Length
+            self.allowedLength = 1  # total allowed Length
             self.previousHead = 0, 0  # previous head point
             self.randomFoodLocation()
 
@@ -553,7 +555,10 @@ def bot_data_update():
     print(bot_cnt)
     if bot_cnt==30:
         bot_data['bot_velocityX']=random.choice([-1,0,1])
-        bot_data['bot_velocityY']=random.choice([-1,0,1])
+        if bot_data['bot_velocityX']==0:
+            bot_data['bot_velocityY']=random.choice([-1,1])
+        else:
+            bot_data['bot_velocityY']=random.choice([-1,0,1])
         bot_cnt=0
     bot_cnt += 1
 
