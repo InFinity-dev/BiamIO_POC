@@ -207,7 +207,7 @@ class SnakeGameClass:
         # [TODO] 조건문으로 host,request에 대한 previeousHead, velocity 할당
         # start point: host=(0,360), request=(1280, 360)
         # self.previousHead = random.randint(100, 1000), random.randint(100, 600)
-        self.previousHead = (0, 360)
+        self.previousHead = (5, 360)
 
         self.speed = 0.1
 
@@ -295,7 +295,7 @@ class SnakeGameClass:
     def my_snake_update(self, HandPoints, o_bodys):
         px, py = self.previousHead
         # ----HandsPoint moving ----
-        s_speed = 30
+        s_speed = 20
         if HandPoints:
             m_x, m_y = HandPoints
             dx = m_x - px  # -1~1
@@ -317,14 +317,22 @@ class SnakeGameClass:
             # print(self.velocityX)
             # print(self.velocityY)
 
-            cx = round(px + self.velocityX * self.speed)
-            cy = round(py + self.velocityY * self.speed)
-
         else:
             self.speed = s_speed
-            cx = round(px + self.velocityX * self.speed)
-            cy = round(py + self.velocityY * self.speed)
+
+        cx = round(px + self.velocityX * self.speed)
+        cy = round(py + self.velocityY * self.speed)
         # ----HandsPoint moving ----end
+        if cx<0 or cx>1280 or cy< 0 or cy>720:
+            if cx<0: cx=0
+            if cx>1280: cx=1280
+            if cy<0: cy=0
+            if cy>720: cy=720
+
+        if cx==0 or cx==1280:
+            self.velocityX=-self.velocityX
+        if cy== 0 or cy==720:
+            self.velocityY=-self.velocityY
 
         # print(f'{cx} , {cy}')
 
@@ -508,9 +516,9 @@ bot_data = {'bot_head_x': 300,
             'bot_body_node': [],
             'currentLength': 0,
             'lengths': [],
-            'bot_velocityX': 0,
-            'bot_velocityY': 0}
-i = 0
+            'bot_velocityX': random.choice([-1, 1]),
+            'bot_velocityY': random.choice([-1, 1])}
+bot_cnt = 0
 
 
 def randomposition():
@@ -520,18 +528,34 @@ def randomposition():
 
 
 def bot_data_update():
-    global bot_data, i
+    global bot_data, bot_cnt
 
-    bot_speed = 40
-    bot_velocityX = bot_data['bot_velocityX']
-    bot_velocityY = bot_data['bot_velocityY']
-    # 1초 마다 방향 바꾸기
-    if i == 0:
-        bot_data['bot_velocityX'] = random.choice([-1, 0, 1])
-        bot_data['bot_velocityY'] = random.choice([-1, 0, 1])
-        i = 30
-
+    bot_speed=20
     px, py = bot_data['bot_head_x'], bot_data['bot_head_y']
+
+    if px<=0 or px>=1280 or py<= 0 or py>=720:
+        if px<0: px=0
+        if px>1280: px=1280
+        if py<0: py=0
+        if py>720: py=720
+
+        if px==0 or px==1280:
+            bot_data['bot_velocityX']=-bot_data['bot_velocityX']
+        if py== 0 or py==720:
+            bot_data['bot_velocityY']=-bot_data['bot_velocityY']
+
+
+    # 1초 마다 방향 바꾸기
+    print(bot_cnt)
+    if bot_cnt==30:
+        bot_data['bot_velocityX']=random.choice([-1,0,1])
+        bot_data['bot_velocityY']=random.choice([-1,0,1])
+        bot_cnt=0
+    bot_cnt += 1
+
+    bot_velocityX=bot_data['bot_velocityX']
+    bot_velocityY=bot_data['bot_velocityY']
+
     cx = round(px + bot_velocityX * bot_speed)
     cy = round(py + bot_velocityY * bot_speed)
 
@@ -551,7 +575,7 @@ def bot_data_update():
 
             if bot_data['currentLength'] < 250:
                 break
-    i -= 1
+
 
 
 @app.route('/test_bed')
@@ -574,6 +598,7 @@ def test_bed():
                 pointIndex = lmList[8][0:2]
 
             bot_data_update()
+            print(pointIndex)
             img = game.update(img, bot_data, pointIndex, True)
 
             # encode the image as a JPEG string
