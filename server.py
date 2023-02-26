@@ -28,7 +28,9 @@ def index():
 def test_connect():
     ip_addr = request.remote_addr
     port = request.environ['REMOTE_PORT']
-    print(f'Client connected: {ip_addr}:{port}')
+    sid = request.sid
+    emit('get_sid', sid)
+    print(f'Client connected: {ip_addr}:{port} and sid = {sid}')
 
 @socketio.on('disconnect')
 def test_disconnect():
@@ -57,9 +59,19 @@ def gameover_to_server(data):
 def foodEat_to_server(data):
     foodPoint=[]
     print(f'foodEat_to_server Function Called!!!')
+
+    if players_in_room[data['room_id']][0] == request.sid:
+        host_user = players_in_room[data['room_id']][0]
+        receive_user = players_in_room[data['room_id']][1]
+    else:
+        host_user = players_in_room[data['room_id']][1]
+        receive_user = players_in_room[data['room_id']][0]
+
     if data['foodEat']:
         foodPoint=random.randint(100, 1000), random.randint(100, 600)
-        emit("foodPoint_from_server", {'foodPoint' : foodPoint}, broadcast=True)
+        emit("foodPoint_from_server", {'foodPoint' : foodPoint, 'sid' : host_user}, to=receive_user)
+        emit("foodPoint_from_server", {'foodPoint' : foodPoint, 'sid' : receive_user}, to=host_user)
+    
     print('reposition food')
 
 @socketio.on('join')
@@ -79,7 +91,6 @@ def handle_join():
         join_room(room_id)
 
         room_of_players[request.sid] = room_id
-        players_in_room[room_id] = 0
 
         last_created_room = ""
         print(room_of_players)
@@ -132,12 +143,24 @@ def my_port(data):
     ip_addr = request.remote_addr
     port = request.environ['REMOTE_PORT']
     room_id = data['room_id']
-
+    sid = str(request.sid)
+    print(f"room_id = {room_id},sid = {sid}")
     join_room(room_id)
-    players_in_room[room_id] += 1
+    if room_id not in players_in_room:
+        players_in_room[room_id] = []
+        players_in_room[room_id].append(sid)
+    else:
+        print(f"players_in_room[{room_id}] : {players_in_room[room_id]}")
+        if sid not in players_in_room[room_id]:
+            players_in_room[room_id].append(sid)
+            print(f"players_in_room[{room_id}] : {players_in_room[room_id]}")
+        else:
+            print("already exist sid")
+            return
+
     emit('my_port', {'my_port':port})
 
-    if players_in_room[room_id] == 2:
+    if len(players_in_room[room_id]) == 2:
         emit('opponent_address', {'ip_addr' : ip_addr, 'port' : port}, broadcast=True, include_self=False, room=room_id)
         emit('opponent_address', {'ip_addr' : address[room_id][0], 'port' : address[room_id][1]})
     else:
