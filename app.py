@@ -29,7 +29,8 @@ app.config['SECRET_KEY'] = "roomfitisdead"
 socketio = SocketIO(app, cors_allowed_origins='*')
 
 # True -> udp 통신, false -> 서버 통신
-use_udp = True
+# use_udp = True
+use_udp = False
 
 class HandDetector:
     """
@@ -492,7 +493,8 @@ class SnakeGameClass:
 
     def __del__(self):
         global use_udp
-        use_udp = True
+        # use_udp = True
+        use_udp = False
         self.sock.close()
 ######################################################################################
 
