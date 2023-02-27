@@ -206,7 +206,6 @@ detector = HandDetector(detectionCon=0.5, maxHands=1)
 
 # UDP 전송 위해 딕셔너리로 자료형 변환함. 문제 발생시 참조
 opponent_data = {}
-food_data=[]
 gameover_flag = False
 
 class SnakeGameClass:
@@ -237,9 +236,6 @@ class SnakeGameClass:
         self.imgFood = cv2.imread(pathFood, cv2.IMREAD_UNCHANGED)
         self.hFood, self.wFood, _ = self.imgFood.shape
         self.foodPoint = 0, 0
-
-        # socketio.emit('foodEat', {'foodEat': True})
-        # self.randomFoodLocation(True)
 
         self.score = 0
         self.gameOver = False
@@ -280,14 +276,8 @@ class SnakeGameClass:
 
     # ---collision function---end
 
-    def randomFoodLocation(self, foodEat):
-        global food_data
-
-        if food_data:
-            self.foodPoint=food_data
-        else:
-            if foodEat:
-                self.foodPoint = random.randint(100, 1000), random.randint(100, 600)
+    def randomFoodLocation(self):
+        self.foodPoint = random.randint(100, 1000), random.randint(100, 600)
 
     def draw_snakes(self, imgMain, points, score, isMe):
 
@@ -321,7 +311,7 @@ class SnakeGameClass:
                                     (rx - self.wFood // 2, ry - self.hFood // 2))
         return imgMain
 
-    def my_snake_update(self, HandPoints, o_bodys):
+    def my_snake_update(self, HandPoints, o_bodys, isBot):
         px, py = self.previousHead
         # ----HandsPoint moving ----
         s_speed = 20
@@ -388,19 +378,18 @@ class SnakeGameClass:
         # Check if snake ate the Food
         rx, ry = self.foodPoint
         print(f'foodPoint in my_snake_update func = {rx,ry}')
-        foodEat=False
         # print(f'먹이 위치 : {self.foodPoint}')
         if rx - self.wFood // 2 < cx < rx + self.wFood // 2 and \
                 ry - self.hFood // 2 < cy < ry + self.hFood // 2:
 
-            foodEat=True
+            if isBot:
+                self.randomFoodLocation()
+            else:
+                socketio.emit('foodEat', {'foodEat': True})
             self.allowedLength += 50
             self.score += 1
 
-        print(foodEat)
-        socketio.emit('foodEat', {'foodEat': foodEat})
-        print(self.foodPoint)
-        self.randomFoodLocation(foodEat)
+        
 
         if use_udp:
             self.send_data(cx, cy)
@@ -419,7 +408,8 @@ class SnakeGameClass:
             self.currentLength = 0  # total length of the snake
             self.allowedLength = 150  # total allowed Length
             self.previousHead = 0, 0  # previous head point
-            self.randomFoodLocation()
+            #self.randomFoodLocation()
+            socketio.emit('foodEat', {'foodEat': True})
 
     def update(self, imgMain, receive_Data, HandPoints, isBot):
         global gameover_flag
@@ -448,7 +438,7 @@ class SnakeGameClass:
 
             # update and draw own snake
             print(f'trying to call my_snake_update function : self.foodPoint-> {self.foodPoint}')
-            self.my_snake_update(HandPoints, body_node)
+            self.my_snake_update(HandPoints, body_node, isBot)
             imgMain = self.draw_Food(imgMain)
             # 1 이면 내 뱀
             imgMain = self.draw_snakes(imgMain, self.points, self.score, 1)
@@ -562,9 +552,9 @@ def opp_data_transfer(data):
 
 @socketio.on('foodPoint_to_flask')
 def foodPoint_to_flask(data):
-    global food_data
-    food_data = data['foodPoint']
-    print(f'food_data get from server : {food_data}')
+    global game
+    game.foodPoint = data['foodPoint']
+    print(f'food_data get from server : {game.foodPoint}')
 
 @app.route('/snake')
 def snake():
@@ -577,7 +567,6 @@ def snake():
         # time.sleep(1)
 
         socketio.emit('foodEat', {'foodEat': True})
-        game.randomFoodLocation(True)
 
         print(f'inside generator before while loop')
 
